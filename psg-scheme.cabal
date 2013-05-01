@@ -1,0 +1,20 @@
+name:                psg-scheme
+version:             0.1.0.0
+synopsis:            Scheme interpreter written in Haskell
+description:         Scheme interpreter written in Haskell.
+license:             BSD3
+license-file:        LICENSE
+author:              amkkun
+maintainer:          amkkun@gmail.com
+copyright:           amkkun
+category:            Language
+build-type:          Simple
+cabal-version:       >=1.8
+
+executable psg-scheme
+  main-is:           main.hs
+  ghc-options:       -Wall
+                     -fno-warn-unused-do-bind
+  -- other-modules:
+  build-depends:       base ==4.5.*
+                     , trifecta >= 1.1
