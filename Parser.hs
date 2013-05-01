@@ -5,17 +5,17 @@ import Text.Trifecta hiding (parseString)
 
 import Types
 
-parseValueList :: Parser Value
-parseValueList = List <$> parseList parseValue
-
-parseList :: Parser a -> Parser [a]
-parseList parser = parens $ sepBy parser spaces
-
 parseValue :: Parser Value
-parseValue = parseNumber <|> parseString
+parseValue = parseNumber <|> parseString <|> parseList
+
+parseNumber :: Parser Value
+parseNumber = Number <$> integer
 
 parseString :: Parser Value
 parseString = String <$> stringLiteral
 
-parseNumber :: Parser Value
-parseNumber = Number <$> integer
+parseList :: Parser Value
+parseList = List <$> list parseValue
+
+list :: Parser a -> Parser [a]
+list parser = parens $ sepBy parser spaces

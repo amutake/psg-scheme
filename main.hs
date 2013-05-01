@@ -10,5 +10,5 @@ main = do
     if null str
         then putStrLn "bye"
         else do
-            parseTest parseValueList str
+            parseTest parseValue str
             main
