@@ -1,7 +1,8 @@
 module Types where
 
 data Value
-    = Number Integer
+    = Bool Bool
+    | Number Integer
     | String String
     | List [Value]
     deriving (Show)

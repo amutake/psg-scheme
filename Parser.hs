@@ -6,7 +6,13 @@ import Text.Trifecta hiding (parseString)
 import Types
 
 parseValue :: Parser Value
-parseValue = parseNumber <|> parseString <|> parseList
+parseValue = parseBool <|> parseNumber <|> parseString <|> parseList
+
+parseBool :: Parser Value
+parseBool = Bool <$> parseTrue <|> Bool <$> parseFalse
+  where
+    parseTrue = string "#t" >> return True
+    parseFalse = string "#f" >> return False
 
 parseNumber :: Parser Value
 parseNumber = Number <$> integer
