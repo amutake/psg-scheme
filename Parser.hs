@@ -6,7 +6,12 @@ import Text.Trifecta hiding (parseString)
 import Types
 
 parseValue :: Parser Value
-parseValue = parseBool <|> parseNumber <|> parseString <|> parseList
+parseValue =
+    parseBool <|>
+    parseNumber <|>
+    parseString <|>
+    parseList <|>
+    parseIdent
 
 parseBool :: Parser Value
 parseBool = Bool <$> parseTrue <|> Bool <$> parseFalse
@@ -22,6 +27,8 @@ parseString = String <$> stringLiteral
 
 parseList :: Parser Value
 parseList = List <$> list parseValue
+  where
+    list parser = parens $ sepBy parser spaces
 
-list :: Parser a -> Parser [a]
-list parser = parens $ sepBy parser spaces
+parseIdent :: Parser Value
+parseIdent = Ident <$> some (alphaNum <|> oneOf "!$%&*+-./<=>?@^_")
