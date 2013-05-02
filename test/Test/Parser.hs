@@ -95,6 +95,14 @@ parsePairTest = do
             parsePair `cannotParse` "((())"
         it "can parse (()))" $ do
             parsePair `canParse` "(()))" $ Pair Nil Nil
+        it "can parse (() . ())" $ do
+            parsePair `canParse` "(() . ())" $ Pair Nil Nil
+        it "can parse (() () () . ())" $ do
+            parsePair `canParse` "(() () () . ())" $
+                Pair Nil (Pair Nil (Pair Nil Nil))
+        it "can parse (((() . ()) . (() . ())) . (() . ()))" $ do
+            parsePair `canParse` "(((() . ()) . (() . ())) . (() . ()))" $
+                Pair (Pair (Pair Nil Nil) (Pair Nil Nil)) (Pair Nil Nil)
 
 parseValueTest :: Spec
 parseValueTest = do
