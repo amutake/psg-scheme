@@ -6,6 +6,6 @@ data Value
     | String String
     | List [Value]
     | Ident Ident
-    deriving (Show)
+    deriving (Show, Eq)
 
 type Ident = String

@@ -24,4 +24,15 @@ executable psg-scheme
   other-modules:       Parser
                      , Types
   build-depends:       base ==4.5.*
-                     , trifecta >= 1.1
+                     , trifecta >=1.1
+
+test-suite spec
+  type:              exitcode-stdio-1.0
+  main-is:           spec.hs
+  hs-source-dirs:    test, src
+  ghc-options:       -Wall
+                     -threaded
+                     -fno-warn-unused-do-bind
+  build-depends:       base ==4.5.*
+                     , hspec >=1.5
+                     , trifecta >=1.1
