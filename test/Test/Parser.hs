@@ -2,15 +2,17 @@ module Test.Parser where
 
 import Data.Monoid
 import Test.Hspec
-import Text.Trifecta
+import Text.Trifecta (Result (..), Parser)
+import qualified Text.Trifecta as T
 
-import Parser hiding (parseString)
+import Parser
 import Types
 
 runParserTests :: IO ()
 runParserTests = hspec $ do
     parseBoolTest
     parseNumberTest
+    parseStringTest
     parseValueTest
 
 parseBoolTest :: Spec
@@ -41,8 +43,29 @@ parseNumberTest = do
             parseNumber `canParse` "001" $ Number 1
         it "can parse +001" $ do
             parseNumber `canParse` "+001" $ Number 1
-        it "cannot parse +-1" $ do
+        it "can't parse +-1" $ do
             parseNumber `cannotParse` "+-1"
+
+parseStringTest :: Spec
+parseStringTest = do
+    describe "parseString" $ do
+        it "can parse \"amkkun\"" $ do
+            parseString `canParse` "\"amkkun\"" $ String "amkkun"
+        it "can parse \"My name is amkkun\"" $ do
+            parseString `canParse` "\"My name is amkkun\"" $
+                String "My name is amkkun"
+        it "can parse \"\\\\\"" $ do
+            parseString `canParse` "\"\\\\\"" $ String "\\"
+        it "can parse \"\\\"\"" $ do
+            parseString `canParse` "\"\\\"\"" $ String "\""
+        it "can parse \"\\n\"" $ do
+            parseString `canParse` "\"\\n\"" $ String "\n"
+        it "can parse \"\\n\\f\\b\\r\\t\\'\\\"\\\\\"" $ do
+            parseString `canParse` "\"\\n\\f\\b\\r\\t\\'\\\"\\\\\"" $
+                String "\n\f\b\r\t\'\"\\"
+        it "can't parse abc" $ do
+            parseString `cannotParse` "abc"
+
 
 parseValueTest :: Spec
 parseValueTest = do
@@ -59,7 +82,7 @@ parseValueTest = do
 
 canParse :: (Eq a, Show a) => Parser a -> String -> a -> Expectation
 canParse parser str expect =
-    parseString parser mempty str `shouldSatisfy` check expect
+    T.parseString parser mempty str `shouldSatisfy` check expect
   where
     check value result = case result of
         Success v -> v == value
@@ -67,7 +90,7 @@ canParse parser str expect =
 
 cannotParse :: (Eq a, Show a) => Parser a -> String -> Expectation
 cannotParse parser str =
-    parseString parser mempty str `shouldSatisfy` check
+    T.parseString parser mempty str `shouldSatisfy` check
   where
     check result = case result of
         Success _ -> False
