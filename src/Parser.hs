@@ -1,6 +1,7 @@
 module Parser where
 
-import Control.Applicative ((<|>), (<$>))
+import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*))
+import Control.Comonad (($>))
 import Text.Trifecta hiding (parseString)
 
 import Types
@@ -10,14 +11,15 @@ parseValue =
     parseBool <|>
     parseNumber <|>
     parseString <|>
-    parseList <|>
+    parseNil <|>
+    parsePair <|>
     parseIdent
 
 parseBool :: Parser Value
-parseBool = Bool <$> parseTrue <|> Bool <$> parseFalse
+parseBool = parseTrue <|> parseFalse
   where
-    parseTrue = string "#t" >> return True
-    parseFalse = string "#f" >> return False
+    parseTrue = symbol "#t" $> Bool True
+    parseFalse = symbol "#f" $> Bool False
 
 parseNumber :: Parser Value
 parseNumber = Number <$> integer
@@ -25,10 +27,23 @@ parseNumber = Number <$> integer
 parseString :: Parser Value
 parseString = String <$> stringLiteral
 
-parseList :: Parser Value
-parseList = List <$> list parseValue
+parseNil :: Parser Value
+parseNil = try (parens whiteSpace) $> Nil
+
+parsePair :: Parser Value
+parsePair = try parseProperList <|> try parseDottedList
+
+parseProperList :: Parser Value
+parseProperList = symbol "(" *> pair
   where
-    list parser = parens $ sepBy parser spaces
+    end = symbol ")" $> Nil
+    pair = Pair <$> parseValue <*> (end <|> pair)
+
+parseDottedList :: Parser Value
+parseDottedList = symbol "(" *> pair
+  where
+    end = symbol "." *> parseValue <* symbol ")"
+    pair = Pair <$> parseValue <*> (end <|> pair)
 
 parseIdent :: Parser Value
 parseIdent = Ident <$> some (alphaNum <|> oneOf "!$%&*+-./<=>?@^_")

@@ -13,7 +13,8 @@ runParserTests = hspec $ do
     parseBoolTest
     parseNumberTest
     parseStringTest
-    parseListTest
+    parseNilTest
+    parsePairTest
     parseValueTest
 
 parseBoolTest :: Spec
@@ -67,37 +68,46 @@ parseStringTest = do
         it "can't parse abc" $ do
             parseString `cannotParse` "abc"
 
-parseListTest :: Spec
-parseListTest = do
-    describe "parseList" $ do
+parseNilTest :: Spec
+parseNilTest = do
+    describe "parseNil" $ do
         it "can parse ()" $ do
-            parseList `canParse` "()" $ List []
+            parseNil `canParse` "()" $ Nil
+        it "can parse (   )" $ do
+            parseNil `canParse` "(   )" $ Nil
+        it "can't parse (())" $ do
+            parseNil `cannotParse` "(())"
+
+parsePairTest :: Spec
+parsePairTest = do
+    describe "parsePair" $ do
+        it "can't parse ()" $ do
+            parsePair `cannotParse` "()"
         it "can parse (())" $ do
-            parseList `canParse` "(())" $ List [List []]
+            parsePair `canParse` "(())" $ Pair Nil Nil
         it "can parse (() () ())" $ do
-            parseList `canParse` "(() () ())" $
-                List [List [], List [], List []]
+            parsePair `canParse` "(() () ())" $
+                Pair Nil (Pair Nil (Pair Nil Nil))
         it "can parse (((()) ()) ())" $ do
-            parseList `canParse` "(((()) ()) ())" $ do
-                List [List [List [List []], List []], List []]
+            parsePair `canParse` "(((()) ()) ())" $ do
+                Pair (Pair (Pair Nil Nil) (Pair Nil Nil)) (Pair Nil Nil)
         it "can't parse ((())" $ do
-            parseList `cannotParse` "((())"
+            parsePair `cannotParse` "((())"
         it "can parse (()))" $ do
-            parseList `canParse` "(()))" $
-                List [List []]
+            parsePair `canParse` "(()))" $ Pair Nil Nil
 
 parseValueTest :: Spec
 parseValueTest = do
     describe "parseValue" $ do
         it "can parse (1 2 3)" $ do
             parseValue `canParse` "(1 2 3)" $
-                List [Number 1, Number 2, Number 3]
+                Pair (Number 1) (Pair (Number 2) (Pair (Number 3) Nil))
         it "can parse ((1 2) (3) 4)" $ do
             parseValue `canParse` "((1 2) (3) 4)" $
-                List [List [Number 1, Number 2], List [Number 3], Number 4]
+                Pair (Pair (Number 1) (Pair (Number 2) Nil)) (Pair (Pair (Number 3) Nil) (Pair (Number 4) Nil))
         it "can parse (#t #f #t)" $ do
             parseValue `canParse` "(#t #f #t)" $
-                List [Bool True, Bool False, Bool True]
+                Pair (Bool True) (Pair (Bool False) (Pair (Bool True) Nil))
 
 canParse :: (Eq a, Show a) => Parser a -> String -> a -> Expectation
 canParse parser str expect =

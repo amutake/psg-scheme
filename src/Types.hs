@@ -4,7 +4,8 @@ data Value
     = Bool Bool
     | Number Integer
     | String String
-    | List [Value]
+    | Nil
+    | Pair Value Value
     | Ident Ident
     deriving (Show, Eq)
 
