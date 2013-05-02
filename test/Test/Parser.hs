@@ -9,7 +9,20 @@ import Types
 
 runParserTests :: IO ()
 runParserTests = hspec $ do
+    parseBoolTest
     parseValueTest
+
+parseBoolTest :: Spec
+parseBoolTest = do
+    describe "parseBool" $ do
+        it "can parse #t" $ do
+            parseBool `canParse` "#t" $ Bool True
+        it "can parse #f" $ do
+            parseBool `canParse` "#f" $ Bool False
+        it "can't parse ##" $ do
+            parseBool `cannotParse` "##"
+        it "can parse #ft" $ do
+            parseBool `canParse` "#ft" $ Bool False
 
 parseValueTest :: Spec
 parseValueTest = do
