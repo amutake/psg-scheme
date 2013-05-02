@@ -15,6 +15,7 @@ runParserTests = hspec $ do
     parseStringTest
     parseNilTest
     parsePairTest
+    parseIdentTest
     parseValueTest
 
 parseBoolTest :: Spec
@@ -104,6 +105,25 @@ parsePairTest = do
             parsePair `canParse` "(((() . ()) . (() . ())) . (() . ()))" $
                 Pair (Pair (Pair Nil Nil) (Pair Nil Nil)) (Pair Nil Nil)
 
+parseIdentTest :: Spec
+parseIdentTest = do
+    describe "parseIdent" $ do
+        it "can parse amkkun" $ do
+            parseIdent `canParse` "amkkun" $ Ident "amkkun"
+        it "can parse AmKkUn" $ do
+            parseIdent `canParse` "AmKkUn" $ Ident "amkkun"
+        it "can parse amkkun123" $ do
+            parseIdent `canParse` "amkkun123" $ Ident "amkkun123"
+        it "can parse 123amkkun" $ do
+            parseIdent `canParse` "123amkkun" $ Ident "123amkkun"
+        it "can't parse 123" $ do
+            parseIdent `cannotParse` "123"
+        it "can parse !$%&*+-./<=>?@^_" $ do
+            parseIdent `canParse` "!$%&*+-./<=>?@^_" $
+                Ident "!$%&*+-./<=>?@^_"
+        it "can't parse ." $ do
+            parseIdent `cannotParse` "."
+
 parseValueTest :: Spec
 parseValueTest = do
     describe "parseValue" $ do
@@ -116,6 +136,9 @@ parseValueTest = do
         it "can parse (#t #f #t)" $ do
             parseValue `canParse` "(#t #f #t)" $
                 Pair (Bool True) (Pair (Bool False) (Pair (Bool True) Nil))
+        it "can parse (define (S x y z) (x z (y z)))" $
+            parseValue `canParse` "(define (S x y z) (x z (y z)))" $
+                Pair (Ident "define") (Pair (Pair (Ident "s") (Pair (Ident "x") (Pair (Ident "y") (Pair (Ident "z") Nil)))) (Pair (Pair (Ident "x") (Pair (Ident "z") (Pair (Pair (Ident "y") (Pair (Ident "z") Nil)) Nil))) Nil))
 
 canParse :: (Eq a, Show a) => Parser a -> String -> a -> Expectation
 canParse parser str expect =

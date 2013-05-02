@@ -2,6 +2,7 @@ module Parser where
 
 import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*))
 import Control.Comonad (($>))
+import Data.Char (toLower)
 import Text.Trifecta hiding (parseString)
 
 import Types
@@ -22,10 +23,11 @@ parseBool = parseTrue <|> parseFalse
     parseFalse = symbol "#f" $> Bool False
 
 parseNumber :: Parser Value
-parseNumber = Number <$> integer
+parseNumber = try . token $ Number <$>
+    integer' <* notFollowedBy identChar
 
 parseString :: Parser Value
-parseString = String <$> stringLiteral
+parseString = try $ String <$> stringLiteral
 
 parseNil :: Parser Value
 parseNil = try (parens whiteSpace) $> Nil
@@ -46,4 +48,10 @@ parseDottedList = symbol "(" *> pair
     pair = Pair <$> parseValue <*> (end <|> pair)
 
 parseIdent :: Parser Value
-parseIdent = Ident <$> some (alphaNum <|> oneOf "!$%&*+-./<=>?@^_")
+parseIdent = Ident . map toLower <$> (
+    notFollowedBy (Ident <$> symbol "." <|> parseNumber) *>
+    token (some identChar)
+    )
+
+identChar :: Parser Char
+identChar = alphaNum <|> oneOf "!$%&*+-./<=>?@^_"
