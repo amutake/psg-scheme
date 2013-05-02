@@ -13,6 +13,7 @@ runParserTests = hspec $ do
     parseBoolTest
     parseNumberTest
     parseStringTest
+    parseListTest
     parseValueTest
 
 parseBoolTest :: Spec
@@ -66,6 +67,24 @@ parseStringTest = do
         it "can't parse abc" $ do
             parseString `cannotParse` "abc"
 
+parseListTest :: Spec
+parseListTest = do
+    describe "parseList" $ do
+        it "can parse ()" $ do
+            parseList `canParse` "()" $ List []
+        it "can parse (())" $ do
+            parseList `canParse` "(())" $ List [List []]
+        it "can parse (() () ())" $ do
+            parseList `canParse` "(() () ())" $
+                List [List [], List [], List []]
+        it "can parse (((()) ()) ())" $ do
+            parseList `canParse` "(((()) ()) ())" $ do
+                List [List [List [List []], List []], List []]
+        it "can't parse ((())" $ do
+            parseList `cannotParse` "((())"
+        it "can parse (()))" $ do
+            parseList `canParse` "(()))" $
+                List [List []]
 
 parseValueTest :: Spec
 parseValueTest = do
