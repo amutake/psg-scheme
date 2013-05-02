@@ -10,6 +10,7 @@ import Types
 runParserTests :: IO ()
 runParserTests = hspec $ do
     parseBoolTest
+    parseNumberTest
     parseValueTest
 
 parseBoolTest :: Spec
@@ -23,6 +24,25 @@ parseBoolTest = do
             parseBool `cannotParse` "##"
         it "can parse #ft" $ do
             parseBool `canParse` "#ft" $ Bool False
+
+parseNumberTest :: Spec
+parseNumberTest = do
+    describe "parseNumber" $ do
+        it "can parse 1" $ do
+            parseNumber `canParse` "1" $ Number 1
+        it "can parse 12345678901234567890" $ do
+            parseNumber `canParse` "12345678901234567890" $
+                Number 12345678901234567890
+        it "can parse +1" $ do
+            parseNumber `canParse` "+1" $ Number 1
+        it "can parse -1" $ do
+            parseNumber `canParse` "-1" $ Number (-1)
+        it "can parse 001" $ do
+            parseNumber `canParse` "001" $ Number 1
+        it "can parse +001" $ do
+            parseNumber `canParse` "+001" $ Number 1
+        it "cannot parse +-1" $ do
+            parseNumber `cannotParse` "+-1"
 
 parseValueTest :: Spec
 parseValueTest = do
