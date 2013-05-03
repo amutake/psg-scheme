@@ -166,6 +166,11 @@ parseShowTest = do
         it "parse  ( \"a\"  m ( k k ) \"un\" 123  #f ) , then show (\"a\" m (k k) \"un\" 123 #f)" $ do
             " ( \"a\"  m ( k k ) \"un\" 123  #f ) " `shouldBeParsed`
                 "(\"a\" m (k k) \"un\" 123 #f)"
+        it "parse (1 . (2 . (3 . ()))), then show (1 2 3)" $ do
+            "(1 . (2 . (3 . ())))" `shouldBeParsed` "(1 2 3)"
+        it "parse ((1 2 . 3) (1 2) () (1) . (1 2 . ())), then show ((1 2 . 3) (1 2) () (1) . (1 2))" $ do
+            "((1 2 . 3) (1 2) () (1) . (1 2 . ()))" `shouldBeParsed`
+                "((1 2 . 3) (1 2) () (1) 1 2)"
   where
     shouldBeParsed str expect =
         T.parseString parseValue mempty str `shouldSatisfy`

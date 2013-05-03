@@ -15,6 +15,7 @@ instance Show Value where
     show (Number n) = show n
     show (String s) = show s
     show Nil = "()"
+    show (Pair car Nil) = "(" ++ show car ++ ")"
     show (Pair car cdr) = "(" ++ showCar car ++ showCdr cdr
       where
         showCar = show
