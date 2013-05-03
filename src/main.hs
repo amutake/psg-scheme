@@ -1,8 +1,10 @@
 module Main where
 
-import Text.Trifecta (parseTest)
+import Data.Monoid
+import Text.Trifecta (parseString, Result (..))
 
-import Parser
+import Eval
+import Parser (parseValue)
 
 main :: IO ()
 main = do
@@ -10,5 +12,7 @@ main = do
     if null str
         then putStrLn "bye"
         else do
-            parseTest parseValue str
+            case parseString parseValue mempty str of
+                Success v -> print $ eval v
+                Failure d -> print d
             main
