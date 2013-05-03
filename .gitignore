@@ -3,3 +3,4 @@ dist/
 
 src/Sandbox.hs
 test.sh
+exec.sh
