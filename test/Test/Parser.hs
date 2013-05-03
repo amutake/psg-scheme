@@ -17,6 +17,7 @@ runParserTests = hspec $ do
     parsePairTest
     parseIdentTest
     parseValueTest
+    parseShowTest
 
 parseBoolTest :: Spec
 parseBoolTest = do
@@ -155,3 +156,20 @@ cannotParse parser str =
     check result = case result of
         Success _ -> False
         Failure _ -> True
+
+parseShowTest :: Spec
+parseShowTest = do
+    describe "parse and show" $ do
+        it "parse (define (S x y z) (x z (y z))), then show (define (s x y z) (x z (y z)))" $ do
+            "(define (S x y z) (x z (y z)))" `shouldBeParsed`
+                "(define (s x y z) (x z (y z)))"
+        it "parse  ( \"a\"  m ( k k ) \"un\" 123  #f ) , then show (\"a\" m (k k) \"un\" 123 #f)" $ do
+            " ( \"a\"  m ( k k ) \"un\" 123  #f ) " `shouldBeParsed`
+                "(\"a\" m (k k) \"un\" 123 #f)"
+  where
+    shouldBeParsed str expect =
+        T.parseString parseValue mempty str `shouldSatisfy`
+            check expect
+    check expect result = case result of
+        Success v -> show v == expect
+        Failure _ -> False

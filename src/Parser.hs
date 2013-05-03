@@ -8,7 +8,7 @@ import Text.Trifecta hiding (parseString)
 import Types
 
 parseValue :: Parser Value
-parseValue =
+parseValue = between spaces spaces $
     parseBool <|>
     parseNumber <|>
     parseString <|>
