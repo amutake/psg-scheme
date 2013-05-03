@@ -15,6 +15,7 @@ runParserTests = hspec $ do
     parseStringTest
     parseNilTest
     parsePairTest
+    parseQuoteTest
     parseIdentTest
     parseValueTest
     parseShowTest
@@ -105,6 +106,19 @@ parsePairTest = do
         it "can parse (((() . ()) . (() . ())) . (() . ()))" $ do
             parsePair `canParse` "(((() . ()) . (() . ())) . (() . ()))" $
                 Pair (Pair (Pair Nil Nil) (Pair Nil Nil)) (Pair Nil Nil)
+
+parseQuoteTest :: Spec
+parseQuoteTest = do
+    describe "parseQuote" $ do
+        it "can parse '(1 2)" $ do
+            parseQuote `canParse` "'(1 2)" $
+                Pair (Ident "quote") (Pair (Pair (Number 1) (Pair (Number 2) Nil)) Nil)
+        it "can parse '''a" $ do
+            parseQuote `canParse` "'''a" $ do
+                Pair (Ident "quote") (Pair (Pair (Ident "quote") (Pair (Pair (Ident "quote") (Pair (Ident "a") Nil)) Nil)) Nil)
+        it "can parse '('a 'b)"$ do
+            parseQuote `canParse` "'('a 'b)" $ do
+                Pair (Ident "quote") (Pair (Pair (Pair (Ident "quote") (Pair (Ident "a") Nil)) (Pair (Pair (Ident "quote") (Pair (Ident "b") Nil)) Nil)) Nil)
 
 parseIdentTest :: Spec
 parseIdentTest = do
