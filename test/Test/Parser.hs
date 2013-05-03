@@ -185,6 +185,8 @@ parseShowTest = do
         it "parse ((1 2 . 3) (1 2) () (1) . (1 2 . ())), then show ((1 2 . 3) (1 2) () (1) . (1 2))" $ do
             "((1 2 . 3) (1 2) () (1) . (1 2 . ()))" `shouldBeParsed`
                 "((1 2 . 3) (1 2) () (1) 1 2)"
+        it "parse ''('a '(b 'c)), then show ''('a '(b 'c))" $ do
+            "''('a '(b 'c))" `shouldBeParsed` "''('a '(b 'c))"
   where
     shouldBeParsed str expect =
         T.parseString parseValue mempty str `shouldSatisfy`
