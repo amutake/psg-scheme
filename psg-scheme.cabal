@@ -26,6 +26,12 @@ executable psg-scheme
   build-depends:       base ==4.5.*
                      , trifecta >=1.1
                      , comonad ==3.*
+                     , transformers
+                     , transformers-base
+                     , monad-control
+                     , lifted-base
+                     , mtl
+                     , containers
 
 test-suite spec
   type:              exitcode-stdio-1.0
@@ -38,3 +44,9 @@ test-suite spec
                      , hspec >=1.5
                      , trifecta >=1.1
                      , comonad ==3.*
+                     , transformers
+                     , transformers-base
+                     , monad-control
+                     , lifted-base
+                     , mtl
+                     , containers
