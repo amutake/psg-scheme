@@ -1,6 +1,6 @@
 module Parser where
 
-import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*))
+import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*), pure)
 import Control.Comonad (($>))
 import Data.Char (toLower)
 import Text.Trifecta hiding (parseString)
@@ -14,6 +14,7 @@ parseValue = between spaces spaces $
     parseString <|>
     parseNil <|>
     parsePair <|>
+    parseQuote <|>
     parseIdent
 
 parseBool :: Parser Value
@@ -46,6 +47,11 @@ parseDottedList = symbol "(" *> pair
   where
     end = symbol "." *> parseValue <* symbol ")"
     pair = Pair <$> parseValue <*> (end <|> pair)
+
+parseQuote :: Parser Value
+parseQuote = Pair <$>
+    (symbol "'" $> Ident "quote") <*>
+    (Pair <$> parseValue <*> pure Nil)
 
 parseIdent :: Parser Value
 parseIdent = Ident . map toLower <$> (
