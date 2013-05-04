@@ -3,11 +3,13 @@
   , FlexibleInstances
   , MultiParamTypeClasses
   , UndecidableInstances
+  , DeriveDataTypeable
   #-}
 
 module Types where
 
 import Control.Applicative (Applicative)
+import Control.Exception (Exception)
 import Control.Monad.Base (MonadBase)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State (StateT (..), MonadState)
@@ -22,10 +24,19 @@ import Control.Monad.Trans.Control
     , defaultRestoreT
     )
 import Data.Map (Map)
+import Data.Typeable (Typeable)
+import Text.PrettyPrint.ANSI.Leijen (Doc)
 
 data Env
     = Global (Map Ident Value)
     | Extended (Map Ident Value) Env
+
+data SchemeException
+    = ParseError Doc
+    | NotFunction Ident
+    deriving (Show, Typeable)
+
+instance Exception SchemeException
 
 newtype SchemeT m a = SchemeT
     { runSchemeT :: StateT Env m a

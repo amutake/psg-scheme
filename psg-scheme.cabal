@@ -32,6 +32,7 @@ executable psg-scheme
                      , lifted-base
                      , mtl
                      , containers
+                     , ansi-wl-pprint
 
 test-suite spec
   type:              exitcode-stdio-1.0
@@ -50,3 +51,4 @@ test-suite spec
                      , lifted-base
                      , mtl
                      , containers
+                     , ansi-wl-pprint
