@@ -2,10 +2,18 @@ module Parser where
 
 import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*), pure)
 import Control.Comonad (($>))
+import Control.Monad.Trans.Resource (MonadThrow (..))
 import Data.Char (toLower)
-import Text.Trifecta hiding (parseString)
+import Data.Monoid (mempty)
+import Text.Trifecta hiding (parseString, doc)
+import qualified Text.Trifecta as T
 
 import Types
+
+parse :: MonadThrow m => String -> SchemeT m Value
+parse str = case T.parseString parseValue mempty str of
+    Success val -> return val
+    Failure doc -> monadThrow $ ParseError doc
 
 parseValue :: Parser Value
 parseValue = between spaces spaces $

@@ -35,6 +35,8 @@ data Env
 data SchemeException
     = ParseError Doc
     | NotFunction Ident
+    | Undefined Ident
+    | Exit
     deriving (Show, Typeable)
 
 instance Exception SchemeException
@@ -63,6 +65,9 @@ instance MonadBaseControl base m => MonadBaseControl base (SchemeT m) where
     newtype StM (SchemeT m) a = StMSchemeT { unStMSchemeT :: ComposeSt SchemeT m a }
     liftBaseWith = defaultLiftBaseWith StMSchemeT
     restoreM = defaultRestoreM unStMSchemeT
+
+runScheme :: Monad m => SchemeT m a -> Env -> m (a, Env)
+runScheme = runStateT . runSchemeT
 
 data Value
     = Bool Bool
