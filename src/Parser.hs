@@ -1,6 +1,6 @@
 module Parser where
 
-import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*), pure)
+import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*))
 import Control.Comonad (($>))
 import Control.Monad.Trans.Resource (MonadThrow (..))
 import Data.Char (toLower)
@@ -20,8 +20,8 @@ parseValue = between spaces spaces $
     parseBool <|>
     parseNumber <|>
     parseString <|>
-    parseNil <|>
-    parsePair <|>
+    parseProperList <|>
+    parseDottedList <|>
     parseQuote <|>
     parseIdent
 
@@ -38,28 +38,19 @@ parseNumber = try . token $ Number <$>
 parseString :: Parser Value
 parseString = try $ String <$> stringLiteral
 
-parseNil :: Parser Value
-parseNil = try (parens whiteSpace) $> Nil
-
-parsePair :: Parser Value
-parsePair = try parseProperList <|> try parseDottedList
-
 parseProperList :: Parser Value
-parseProperList = symbol "(" *> pair
-  where
-    end = symbol ")" $> Nil
-    pair = Pair <$> parseValue <*> (end <|> pair)
+parseProperList = try . parens $
+    ProperList <$> many parseValue
 
 parseDottedList :: Parser Value
-parseDottedList = symbol "(" *> pair
-  where
-    end = symbol "." *> parseValue <* symbol ")"
-    pair = Pair <$> parseValue <*> (end <|> pair)
+parseDottedList = try . parens $
+    DottedList <$> some parseValue <* symbol "." <*> parseValue
 
 parseQuote :: Parser Value
-parseQuote = Pair <$>
-    (symbol "'" $> Ident "quote") <*>
-    (Pair <$> parseValue <*> pure Nil)
+parseQuote = ProperList <$>
+    (two <$> (symbol "'" $> Ident "quote") <*> parseValue)
+  where
+    two x y = [x, y]
 
 parseIdent :: Parser Value
 parseIdent = Ident . map toLower <$> (
