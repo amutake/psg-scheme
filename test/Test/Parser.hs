@@ -13,8 +13,8 @@ runParserTests = hspec $ do
     parseBoolTest
     parseNumberTest
     parseStringTest
-    parseNilTest
-    parsePairTest
+    parseProperListTest
+    parseDottedListTest
     parseQuoteTest
     parseIdentTest
     parseValueTest
@@ -71,54 +71,52 @@ parseStringTest = do
         it "can't parse abc" $ do
             parseString `cannotParse` "abc"
 
-parseNilTest :: Spec
-parseNilTest = do
-    describe "parseNil" $ do
+parseProperListTest :: Spec
+parseProperListTest = do
+    describe "parseProperList" $ do
         it "can parse ()" $ do
-            parseNil `canParse` "()" $ Nil
-        it "can parse (   )" $ do
-            parseNil `canParse` "(   )" $ Nil
-        it "can't parse (())" $ do
-            parseNil `cannotParse` "(())"
-
-parsePairTest :: Spec
-parsePairTest = do
-    describe "parsePair" $ do
-        it "can't parse ()" $ do
-            parsePair `cannotParse` "()"
+            parseProperList `canParse` "()" $ ProperList []
+        it "can parse (  )" $ do
+            parseProperList `canParse` "(  )" $ ProperList []
         it "can parse (())" $ do
-            parsePair `canParse` "(())" $ Pair Nil Nil
+            parseProperList `canParse` "(())" $ ProperList [ProperList []]
         it "can parse (() () ())" $ do
-            parsePair `canParse` "(() () ())" $
-                Pair Nil (Pair Nil (Pair Nil Nil))
+            parseProperList `canParse` "(() () ())" $
+                ProperList [ProperList [], ProperList [], ProperList[]]
         it "can parse (((()) ()) ())" $ do
-            parsePair `canParse` "(((()) ()) ())" $ do
-                Pair (Pair (Pair Nil Nil) (Pair Nil Nil)) (Pair Nil Nil)
+            parseProperList `canParse` "(((()) ()) ())" $ do
+                ProperList [ProperList[ProperList [ProperList[]], ProperList[]], ProperList[]]
         it "can't parse ((())" $ do
-            parsePair `cannotParse` "((())"
+            parseProperList `cannotParse` "((())"
         it "can parse (()))" $ do
-            parsePair `canParse` "(()))" $ Pair Nil Nil
+            parseProperList `canParse` "(()))" $ ProperList [ProperList[]]
         it "can parse (() . ())" $ do
-            parsePair `canParse` "(() . ())" $ Pair Nil Nil
+            parseProperList `cannotParse` "(() . ())"
+
+parseDottedListTest :: Spec
+parseDottedListTest = do
+    describe "parseDottedList" $ do
+        it "can parse (() . ())" $ do
+            parseDottedList `canParse` "(() . ())" $ DottedList [ProperList[]] (ProperList [])
         it "can parse (() () () . ())" $ do
-            parsePair `canParse` "(() () () . ())" $
-                Pair Nil (Pair Nil (Pair Nil Nil))
+            parseDottedList `canParse` "(() () () . ())" $
+                DottedList [ProperList [], ProperList [], ProperList []] (ProperList [])
         it "can parse (((() . ()) . (() . ())) . (() . ()))" $ do
-            parsePair `canParse` "(((() . ()) . (() . ())) . (() . ()))" $
-                Pair (Pair (Pair Nil Nil) (Pair Nil Nil)) (Pair Nil Nil)
+            parseDottedList `canParse` "(((() . ()) . (() . ())) . (() . ()))" $
+                DottedList [DottedList [DottedList [ProperList []] (ProperList [])] (DottedList [ProperList []] (ProperList []))] (DottedList [ProperList []] (ProperList []))
 
 parseQuoteTest :: Spec
 parseQuoteTest = do
     describe "parseQuote" $ do
         it "can parse '(1 2)" $ do
             parseQuote `canParse` "'(1 2)" $
-                Pair (Ident "quote") (Pair (Pair (Number 1) (Pair (Number 2) Nil)) Nil)
+                ProperList [Ident "quote", ProperList [Number 1, Number 2]]
         it "can parse '''a" $ do
             parseQuote `canParse` "'''a" $ do
-                Pair (Ident "quote") (Pair (Pair (Ident "quote") (Pair (Pair (Ident "quote") (Pair (Ident "a") Nil)) Nil)) Nil)
+                ProperList [Ident "quote", ProperList [Ident "quote", ProperList [Ident "quote", Ident "a"]]]
         it "can parse '('a 'b)"$ do
             parseQuote `canParse` "'('a 'b)" $ do
-                Pair (Ident "quote") (Pair (Pair (Pair (Ident "quote") (Pair (Ident "a") Nil)) (Pair (Pair (Ident "quote") (Pair (Ident "b") Nil)) Nil)) Nil)
+                ProperList [Ident "quote", ProperList [ProperList [Ident "quote", Ident "a"], ProperList [Ident "quote", Ident "b"]]]
 
 parseIdentTest :: Spec
 parseIdentTest = do
@@ -144,16 +142,16 @@ parseValueTest = do
     describe "parseValue" $ do
         it "can parse (1 2 3)" $ do
             parseValue `canParse` "(1 2 3)" $
-                Pair (Number 1) (Pair (Number 2) (Pair (Number 3) Nil))
+                ProperList [Number 1, Number 2, Number 3]
         it "can parse ((1 2) (3) 4)" $ do
             parseValue `canParse` "((1 2) (3) 4)" $
-                Pair (Pair (Number 1) (Pair (Number 2) Nil)) (Pair (Pair (Number 3) Nil) (Pair (Number 4) Nil))
+                ProperList [ProperList [Number 1, Number 2], ProperList [Number 3], Number 4]
         it "can parse (#t #f #t)" $ do
             parseValue `canParse` "(#t #f #t)" $
-                Pair (Bool True) (Pair (Bool False) (Pair (Bool True) Nil))
+                ProperList [Bool True, Bool False, Bool True]
         it "can parse (define (S x y z) (x z (y z)))" $
             parseValue `canParse` "(define (S x y z) (x z (y z)))" $
-                Pair (Ident "define") (Pair (Pair (Ident "s") (Pair (Ident "x") (Pair (Ident "y") (Pair (Ident "z") Nil)))) (Pair (Pair (Ident "x") (Pair (Ident "z") (Pair (Pair (Ident "y") (Pair (Ident "z") Nil)) Nil))) Nil))
+                ProperList [Ident "define", ProperList [Ident "s", Ident "x", Ident "y", Ident "z"], ProperList [Ident "x", Ident "z", ProperList [Ident "y", Ident "z"]]]
 
 canParse :: (Eq a, Show a) => Parser a -> String -> a -> Expectation
 canParse parser str expect =
