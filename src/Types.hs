@@ -23,6 +23,7 @@ import Control.Monad.Trans.Control
     , defaultLiftWith
     , defaultRestoreT
     )
+import Control.Monad.Trans.Resource (MonadThrow)
 import Data.Map (Map)
 import Data.Typeable (Typeable)
 import Text.PrettyPrint.ANSI.Leijen (Doc)
@@ -47,6 +48,7 @@ newtype SchemeT m a = SchemeT
     , MonadIO
     , MonadState Env
     , MonadBase base
+    , MonadThrow
     )
 
 instance MonadTrans SchemeT where

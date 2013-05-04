@@ -33,6 +33,7 @@ executable psg-scheme
                      , mtl
                      , containers
                      , ansi-wl-pprint
+                     , resourcet
 
 test-suite spec
   type:              exitcode-stdio-1.0
