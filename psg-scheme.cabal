@@ -53,3 +53,4 @@ test-suite spec
                      , mtl
                      , containers
                      , ansi-wl-pprint
+                     , resourcet
