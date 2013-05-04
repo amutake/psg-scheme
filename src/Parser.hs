@@ -43,8 +43,15 @@ parseProperList = try . parens $
     ProperList <$> many parseValue
 
 parseDottedList :: Parser Value
-parseDottedList = try . parens $
-    DottedList <$> some parseValue <* symbol "." <*> parseValue
+parseDottedList = try . parens $ flattenList <$> (DottedList <$>
+    some parseValue <* symbol "." <*> parseValue)
+
+flattenList :: Value -> Value
+flattenList (DottedList xs x) = case flattenList x of
+    ProperList ys -> ProperList $ map flattenList $ xs ++ ys
+    DottedList ys y -> DottedList (map flattenList $ xs ++ ys) y
+    y -> DottedList xs y
+flattenList v = v
 
 parseQuote :: Parser Value
 parseQuote = ProperList <$>

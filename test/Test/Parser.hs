@@ -97,13 +97,13 @@ parseDottedListTest :: Spec
 parseDottedListTest = do
     describe "parseDottedList" $ do
         it "can parse (() . ())" $ do
-            parseDottedList `canParse` "(() . ())" $ DottedList [ProperList[]] (ProperList [])
+            parseDottedList `canParse` "(() . ())" $ ProperList [ProperList[]]
         it "can parse (() () () . ())" $ do
             parseDottedList `canParse` "(() () () . ())" $
-                DottedList [ProperList [], ProperList [], ProperList []] (ProperList [])
+                ProperList [ProperList [], ProperList [], ProperList []]
         it "can parse (((() . ()) . (() . ())) . (() . ()))" $ do
             parseDottedList `canParse` "(((() . ()) . (() . ())) . (() . ()))" $
-                DottedList [DottedList [DottedList [ProperList []] (ProperList [])] (DottedList [ProperList []] (ProperList []))] (DottedList [ProperList []] (ProperList []))
+                ProperList [ProperList [ProperList [ProperList []], ProperList []], ProperList[]]
 
 parseQuoteTest :: Spec
 parseQuoteTest = do
