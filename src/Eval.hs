@@ -29,6 +29,7 @@ evalList env (ProperList ((Ident "define"):(Ident id'):[v])) = do
 evalList env (ProperList ((Ident "define"):(List ids):body)) = do
     (ident, params) <- splitIdents ids
     define env ident $ Func (Lambda params body env)
+evalList env (ProperList ((Ident "set!"):(Ident i):[v])) =          eval env v >>= setVar env i
 evalList env (ProperList ((Ident i):vals)) = do
     v <- lookupEnv env i
     case v of

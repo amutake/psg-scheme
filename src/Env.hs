@@ -61,3 +61,18 @@ extractIdents :: MonadBase IO m => [Value] -> m [Ident]
 extractIdents [] = return []
 extractIdents ((Ident s):vals) = (s:) <$> extractIdents vals
 extractIdents (s:_) = throwIO $ Undefined $ show s
+
+setVar :: MonadBase IO m => EnvRef -> Ident -> Value -> m Value
+setVar ref ident val = do
+    env <- readIORef ref
+    case env of
+        Global map' -> if Map.member ident map'
+            then do
+                modifyIORef ref $ insert ident val
+                return val
+            else throwIO $ Undefined ident
+        Extended map' ref' -> if Map.member ident map'
+            then do
+                modifyIORef ref $ insert ident val
+                return val
+            else setVar ref' ident val
