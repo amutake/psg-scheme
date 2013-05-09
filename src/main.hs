@@ -19,7 +19,7 @@ main = newIORef (Global empty) >>= repl
 scheme :: MonadBase IO m => String -> SchemeT m Value
 scheme = parse >=> eval
 
-repl :: IORef Env -> IO ()
+repl :: EnvRef -> IO ()
 repl env = do
     putStr "scheme> "
     hFlush stdout

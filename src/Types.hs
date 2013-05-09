@@ -40,6 +40,7 @@ data Value
     | Number Integer
     | String String
     | List (List Value)
+    | Func Func
     | Ident Ident
     deriving (Eq)
 
@@ -50,6 +51,7 @@ instance Show Value where
     show (String s) = show s
     show (List (ProperList ((Ident "quote") : [x]))) = "'" ++ show x
     show (List l) = show l
+    show (Func f) = show f
     show (Ident i) = i
 
 type Ident = String
@@ -62,3 +64,13 @@ data List a
 instance Show a => Show (List a) where
     show (ProperList xs) = "(" ++ unwords (map show xs) ++ ")"
     show (DottedList xs x) = "(" ++ unwords (map show xs) ++ " . " ++ show x ++ ")"
+
+data Func
+    = Primitive ([Value] -> Value)
+    | Lambda (List Ident) [Value] EnvRef
+
+instance Eq Func
+
+instance Show Func where
+    show (Primitive _) = "<primitive function>"
+    show (Lambda params body _) = "(lambda " ++ show params ++ " " ++ unwords (map show body) ++ ")"

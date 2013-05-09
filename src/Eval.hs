@@ -12,6 +12,7 @@ eval b@(Bool _) = return b
 eval n@(Number _) = return n
 eval s@(String _) = return s
 eval (List l) = evalList l
+eval f@(Func _) = return f
 eval (Ident i) = throwIO $ Undefined i
 
 evalList :: (MonadBase IO m) => List Value -> SchemeT m Value
