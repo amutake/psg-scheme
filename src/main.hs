@@ -4,7 +4,7 @@ module Main where
 
 import Control.Exception.Lifted (try)
 import Control.Monad ((>=>))
-import Control.Monad.Base (MonadBase)
+import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.IORef
 import Data.Map (empty)
 import System.IO (hFlush, stdout)
@@ -16,15 +16,15 @@ import Types
 main :: IO ()
 main = newIORef (Global empty) >>= repl
 
-scheme :: MonadBase IO m => String -> SchemeT m Value
-scheme = parse >=> eval
+scheme :: MonadBaseControl IO m => EnvRef -> String -> SchemeT m Value
+scheme env = parse >=> eval env
 
 repl :: EnvRef -> IO ()
 repl env = do
     putStr "scheme> "
     hFlush stdout
     str <- getLine
-    result <- runSchemeT (try $ scheme str)
+    result <- runSchemeT (try $ scheme env str)
     case result of
         Left Exit -> putStrLn "bye."
         Left (err :: SchemeException) -> do
