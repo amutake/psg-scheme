@@ -40,7 +40,7 @@ evalList _ xs@(ProperList _) = throwIO $ Undefined $ show xs
 evalList _ xs@(DottedList _ _) = throwIO $ Undefined $ show xs
 
 apply :: MonadBase IO m => Func -> [Value] -> m Value
-apply (Primitive f) vals = return $ f vals
+apply (Primitive f) vals = f vals
 apply (Lambda params body closure) vals = do
     env <- newIORef $ Extended empty closure
     defines env params vals

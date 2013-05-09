@@ -6,15 +6,15 @@ import Control.Exception.Lifted (try)
 import Control.Monad ((>=>))
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.IORef
-import Data.Map (empty)
 import System.IO (hFlush, stdout)
 
 import Eval (eval)
+import Initial (initialEnv)
 import Parser (parse)
 import Types
 
 main :: IO ()
-main = newIORef (Global empty) >>= repl
+main = newIORef initialEnv >>= repl
 
 scheme :: MonadBaseControl IO m => EnvRef -> String -> SchemeT m Value
 scheme env = parse >=> eval env

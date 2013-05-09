@@ -4,11 +4,14 @@
   , MultiParamTypeClasses
   , UndecidableInstances
   , DeriveDataTypeable
+  , FlexibleContexts
+  , RankNTypes
   #-}
 
 module Types where
 
 import Control.Exception (Exception)
+import Control.Monad.Base (MonadBase)
 import Control.Monad.Trans.Identity
 import Data.IORef.Lifted (IORef)
 import Data.Map (Map)
@@ -25,6 +28,7 @@ data SchemeException
     = ParseError Doc
     | NotFunction Ident
     | Undefined Ident
+    | TypeMismatch String
     | Exit
     deriving (Show, Typeable)
 
@@ -66,7 +70,7 @@ instance Show a => Show (List a) where
     show (DottedList xs x) = "(" ++ unwords (map show xs) ++ " . " ++ show x ++ ")"
 
 data Func
-    = Primitive ([Value] -> Value)
+    = Primitive (MonadBase IO m => [Value] -> m Value)
     | Lambda (List Ident) [Value] EnvRef
 
 instance Eq Func
