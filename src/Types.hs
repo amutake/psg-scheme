@@ -10,13 +10,16 @@ module Types where
 
 import Control.Exception (Exception)
 import Control.Monad.Trans.Identity
+import Data.IORef.Lifted (IORef)
 import Data.Map (Map)
 import Data.Typeable (Typeable)
 import Text.PrettyPrint.ANSI.Leijen (Doc)
 
 data Env
     = Global (Map Ident Value)
-    | Extended (Map Ident Value) Env
+    | Extended (Map Ident Value) EnvRef
+
+type EnvRef = IORef Env
 
 data SchemeException
     = ParseError Doc
