@@ -8,22 +8,8 @@
 
 module Types where
 
-import Control.Applicative (Applicative)
 import Control.Exception (Exception)
-import Control.Monad.Base (MonadBase)
-import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.State (StateT (..), MonadState)
-import Control.Monad.Trans.Class (MonadTrans, lift)
-import Control.Monad.Trans.Control
-    ( MonadBaseControl (..)
-    , MonadTransControl (..)
-    , ComposeSt
-    , defaultLiftBaseWith
-    , defaultRestoreM
-    , defaultLiftWith
-    , defaultRestoreT
-    )
-import Control.Monad.Trans.Resource (MonadThrow)
+import Control.Monad.Trans.Identity
 import Data.Map (Map)
 import Data.Typeable (Typeable)
 import Text.PrettyPrint.ANSI.Leijen (Doc)
@@ -41,33 +27,10 @@ data SchemeException
 
 instance Exception SchemeException
 
-newtype SchemeT m a = SchemeT
-    { runSchemeT :: StateT Env m a
-    } deriving
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadIO
-    , MonadState Env
-    , MonadBase base
-    , MonadThrow
-    )
+type SchemeT = IdentityT
 
-instance MonadTrans SchemeT where
-    lift = SchemeT . lift
-
-instance MonadTransControl SchemeT where
-    newtype StT SchemeT a = StScheme { unStScheme :: StT (StateT Env) a }
-    liftWith = defaultLiftWith SchemeT runSchemeT StScheme
-    restoreT = defaultRestoreT SchemeT unStScheme
-
-instance MonadBaseControl base m => MonadBaseControl base (SchemeT m) where
-    newtype StM (SchemeT m) a = StMSchemeT { unStMSchemeT :: ComposeSt SchemeT m a }
-    liftBaseWith = defaultLiftBaseWith StMSchemeT
-    restoreM = defaultRestoreM unStMSchemeT
-
-runScheme :: Monad m => SchemeT m a -> Env -> m (a, Env)
-runScheme = runStateT . runSchemeT
+runSchemeT :: Monad m => SchemeT m a -> m a
+runSchemeT = runIdentityT
 
 data Value
     = Bool Bool

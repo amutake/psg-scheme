@@ -1,8 +1,11 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Parser where
 
 import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*))
 import Control.Comonad (($>))
-import Control.Monad.Trans.Resource (MonadThrow (..))
+import Control.Exception.Lifted (throwIO)
+import Control.Monad.Base (MonadBase)
 import Data.Char (toLower)
 import Data.Monoid (mempty)
 import Text.Trifecta hiding (parseString, doc)
@@ -10,10 +13,10 @@ import qualified Text.Trifecta as T
 
 import Types
 
-parse :: MonadThrow m => String -> SchemeT m Value
+parse :: MonadBase IO m => String -> SchemeT m Value
 parse str = case T.parseString parseValue mempty str of
     Success val -> return val
-    Failure doc -> monadThrow $ ParseError doc
+    Failure doc -> throwIO $ ParseError doc
 
 parseValue :: Parser Value
 parseValue = between spaces spaces $
