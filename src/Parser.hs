@@ -23,8 +23,7 @@ parseValue = between spaces spaces $
     parseBool <|>
     parseNumber <|>
     parseString <|>
-    parseProperList <|>
-    parseDottedList <|>
+    parseList <|>
     parseQuote <|>
     parseIdent
 
@@ -41,23 +40,26 @@ parseNumber = try . token $ Number <$>
 parseString :: Parser Value
 parseString = try $ String <$> stringLiteral
 
-parseProperList :: Parser Value
+parseList :: Parser Value
+parseList = flattenList . List <$> (parseProperList <|> parseDottedList)
+
+parseProperList :: Parser (List Value)
 parseProperList = try . parens $
     ProperList <$> many parseValue
 
-parseDottedList :: Parser Value
-parseDottedList = try . parens $ flattenList <$> (DottedList <$>
-    some parseValue <* symbol "." <*> parseValue)
+parseDottedList :: Parser (List Value)
+parseDottedList = try . parens $ DottedList <$>
+    some parseValue <* symbol "." <*> parseValue
 
 flattenList :: Value -> Value
-flattenList (DottedList xs x) = case flattenList x of
-    ProperList ys -> ProperList $ map flattenList $ xs ++ ys
-    DottedList ys y -> DottedList (map flattenList $ xs ++ ys) y
-    y -> DottedList xs y
+flattenList (List (DottedList xs x)) = case x of
+    List (ProperList ys) -> List $ ProperList $ map flattenList $ xs ++ ys
+    List (DottedList ys y) -> List $ DottedList (map flattenList $ xs ++ ys) y
+    y -> List $ DottedList xs y
 flattenList v = v
 
 parseQuote :: Parser Value
-parseQuote = ProperList <$>
+parseQuote = List . ProperList <$>
     (two <$> (symbol "'" $> Ident "quote") <*> parseValue)
   where
     two x y = [x, y]

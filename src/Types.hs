@@ -39,8 +39,7 @@ data Value
     = Bool Bool
     | Number Integer
     | String String
-    | ProperList [Value]
-    | DottedList [Value] Value
+    | List (List Value)
     | Ident Ident
     deriving (Eq)
 
@@ -49,9 +48,17 @@ instance Show Value where
     show (Bool False) = "#f"
     show (Number n) = show n
     show (String s) = show s
-    show (ProperList ((Ident "quote") : [x])) = "'" ++ show x
-    show (ProperList xs) = "(" ++ unwords (map show xs) ++ ")"
-    show (DottedList xs x) = "(" ++ unwords (map show xs) ++ " . " ++ show x ++ ")"
+    show (List (ProperList ((Ident "quote") : [x]))) = "'" ++ show x
+    show (List l) = show l
     show (Ident i) = i
 
 type Ident = String
+
+data List a
+    = ProperList [a]
+    | DottedList [a] a
+    deriving (Eq)
+
+instance Show a => Show (List a) where
+    show (ProperList xs) = "(" ++ unwords (map show xs) ++ ")"
+    show (DottedList xs x) = "(" ++ unwords (map show xs) ++ " . " ++ show x ++ ")"
