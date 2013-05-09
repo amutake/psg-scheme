@@ -4,6 +4,8 @@ module Eval where
 
 import Control.Exception.Lifted (throwIO)
 import Control.Monad.Base (MonadBase)
+import Data.IORef.Lifted (newIORef)
+import Data.Map (empty)
 
 import Env
 import Types
@@ -27,5 +29,21 @@ evalList env (ProperList ((Ident "define"):(Ident id'):[v])) = do
 evalList env (ProperList ((Ident "define"):(List ids):body)) = do
     (ident, params) <- splitIdents ids
     define env ident $ Func (Lambda params body env)
+evalList env (ProperList ((Ident i):vals)) = do
+    v <- lookupEnv env i
+    case v of
+        Func f -> do
+            vals' <- mapM (eval env) vals
+	    apply f vals'
+        v' -> throwIO $ NotFunction $ "evalList" ++ show v'
 evalList _ xs@(ProperList _) = throwIO $ Undefined $ show xs
 evalList _ xs@(DottedList _ _) = throwIO $ Undefined $ show xs
+
+apply :: MonadBase IO m => Func -> [Value] -> SchemeT m Value
+apply (Primitive f) vals = return $ f vals
+apply (Lambda params body closure) vals = do
+    env <- newIORef $ Extended empty closure
+    defines env params vals
+    let (init', last') = (init body, last body)
+    mapM_ (eval env) init'
+    eval env last'

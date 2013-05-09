@@ -26,9 +26,25 @@ define ref ident val = do
     modifyIORef ref (insert ident val)
     return $ Ident ident
 
+defines :: MonadBase IO m => EnvRef -> List Ident -> [Value] -> SchemeT m ()
+defines ref (ProperList idents) vals
+    | length idents == length vals = do
+        modifyIORef ref $ union $ Map.fromList $ zip idents vals
+    | otherwise = throwIO $ Undefined "num args"
+defines ref (DottedList idents ident) vals
+    | length idents > length vals = throwIO $ Undefined "num args"
+    | otherwise = do
+        let (init', last') = splitAt (length idents) vals
+        modifyIORef ref $ union $ Map.fromList $ zip idents init'
+        modifyIORef ref $ insert ident $ List $ ProperList last'
+
 insert :: Ident -> Value -> Env -> Env
 insert ident val (Global m) = Global $ Map.insert ident val m
 insert ident val (Extended m r) = Extended (Map.insert ident val m) r
+
+union :: Map.Map Ident Value -> Env -> Env
+union m (Global m') = Global $ Map.union m m'
+union m (Extended m' r) = Extended (Map.union m m') r
 
 splitIdents :: MonadBase IO m => List Value -> SchemeT m (Ident, List Ident)
 splitIdents (ProperList []) = throwIO $ Undefined "syntax error"
