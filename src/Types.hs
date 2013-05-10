@@ -1,9 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving
-  , TypeFamilies
-  , FlexibleInstances
-  , MultiParamTypeClasses
-  , UndecidableInstances
-  , DeriveDataTypeable
+{-# LANGUAGE DeriveDataTypeable
   , FlexibleContexts
   , RankNTypes
   #-}

@@ -9,6 +9,7 @@ import Data.Map (empty)
 
 import Env
 import Types
+import Util
 
 eval :: MonadBase IO m => EnvRef -> Value -> m Value
 eval _ b@(Bool _) = return b

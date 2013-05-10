@@ -5,21 +5,17 @@ module Env where
 import Control.Exception.Lifted (throwIO)
 import Control.Monad.Base (MonadBase)
 import Data.IORef.Lifted (readIORef, modifyIORef)
-import Data.Traversable (Traversable, traverse)
 import qualified Data.Map as Map
 
 import Types
 
 lookupEnv :: MonadBase IO m => EnvRef -> Ident -> m Value
-lookupEnv ref ident = do
-    env <- readIORef ref
-    case env of
-        Global m -> case Map.lookup ident m of
-            Nothing -> throwIO $ Undefined ident
-            Just v -> return v
-        Extended m ref' -> case Map.lookup ident m of
-            Nothing -> lookupEnv ref' ident
-            Just v -> return v
+lookupEnv ref ident = readIORef ref >>= lookupEnv'
+  where
+    lookupEnv' (Global map') =
+        maybe (throwIO $ Undefined ident) return $ Map.lookup ident map'
+    lookupEnv' (Extended map' ref') =
+        maybe (lookupEnv ref' ident) return $ Map.lookup ident map'
 
 define :: MonadBase IO m => EnvRef -> Ident -> Value -> m Value
 define ref ident val = do
@@ -46,32 +42,13 @@ union :: Map.Map Ident Value -> Env -> Env
 union m (Global m') = Global $ Map.union m m'
 union m (Extended m' r) = Extended (Map.union m m') r
 
-splitIdents :: MonadBase IO m => List Value -> m (Ident, List Ident)
-splitIdents vals = extractIdents vals >>= split
-  where
-    split (ProperList []) = throwIO $ Undefined "syntax error"
-    split (ProperList (name:params)) = return (name, ProperList params)
-    split (DottedList [] _) = throwIO $ Undefined "syntax error"
-    split (DottedList (name:params) param) =
-        return (name, DottedList params param)
-
-extractIdents :: (MonadBase IO m, Traversable t) => t Value -> m (t Ident)
-extractIdents = traverse extract
-  where
-    extract (Ident i) = return i
-    extract s = throwIO $ Undefined $ show s
-
 setVar :: MonadBase IO m => EnvRef -> Ident -> Value -> m Value
-setVar ref ident val = do
-    env <- readIORef ref
-    case env of
-        Global map' -> if Map.member ident map'
-            then do
-                modifyIORef ref $ insert ident val
-                return val
-            else throwIO $ Undefined ident
-        Extended map' ref' -> if Map.member ident map'
-            then do
-                modifyIORef ref $ insert ident val
-                return val
-            else setVar ref' ident val
+setVar ref ident val = readIORef ref >>= set
+  where
+    set (Global map') = set' map' $ throwIO $ Undefined ident
+    set (Extended map' ref') = set' map' $ setVar ref' ident val
+    set' map' els
+        | Map.member ident map' = do
+              modifyIORef ref $ insert ident val
+              return val
+        | otherwise = els
