@@ -10,11 +10,15 @@
 
 module Types where
 
+import Control.Applicative ((<$>), (<*>))
 import Control.Exception (Exception)
 import Control.Monad.Base (MonadBase)
 import Control.Monad.Trans.Identity
+import Data.Foldable (Foldable)
+import qualified Data.Foldable as Fold
 import Data.IORef.Lifted (IORef)
 import Data.Map (Map)
+import Data.Traversable (Traversable (..))
 import Data.Typeable (Typeable)
 import Text.PrettyPrint.ANSI.Leijen (Doc)
 
@@ -68,6 +72,18 @@ data List a
 instance Show a => Show (List a) where
     show (ProperList xs) = "(" ++ unwords (map show xs) ++ ")"
     show (DottedList xs x) = "(" ++ unwords (map show xs) ++ " . " ++ show x ++ ")"
+
+instance Functor List where
+    fmap f (ProperList xs) = ProperList (fmap f xs)
+    fmap f (DottedList xs x) = DottedList (fmap f xs) (f x)
+
+instance Foldable List where
+    foldr f z (ProperList xs) = foldr f z xs
+    foldr f z (DottedList xs x) = foldr f z (xs ++ [x])
+
+instance Traversable List where
+    traverse f (ProperList xs) = ProperList <$> traverse f xs
+    traverse f (DottedList xs x) = DottedList <$> traverse f xs <*> f x
 
 data Func
     = Primitive (MonadBase IO m => [Value] -> m Value)
