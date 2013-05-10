@@ -8,7 +8,6 @@ import Data.Traversable (Traversable, traverse)
 
 import Types
 
-
 splitIdents :: MonadBase IO m => List Value -> m (Ident, List Ident)
 splitIdents vals = extractIdents vals >>= split
   where
