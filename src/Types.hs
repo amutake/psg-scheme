@@ -89,7 +89,12 @@ data Func
     = Primitive (MonadBase IO m => [Value] -> m Value)
     | Lambda (List Ident) [Value] EnvRef
 
-instance Eq Func
+instance Eq Func where
+    (Primitive _) == (Primitive _) = True
+    (Primitive _) == (Lambda _ _ _) = False
+    (Lambda _ _ _) == (Primitive _) = False
+    (Lambda ids vals ref) == (Lambda ids' vals' ref') =
+        and [ids == ids', vals == vals', ref == ref']
 
 instance Show Func where
     show (Primitive _) = "<primitive function>"

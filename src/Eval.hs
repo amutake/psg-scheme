@@ -16,9 +16,7 @@ eval _ n@(Number _) = return n
 eval _ s@(String _) = return s
 eval env (List l) = evalList env l
 eval _ f@(Func _) = return f
-eval env (Ident i) = do
-    v <- lookupEnv env i
-    return v
+eval env (Ident i) = lookupEnv env i
 
 evalList :: (MonadBase IO m) => EnvRef -> List Value -> m Value
 evalList _ (ProperList ((Ident "quote"):[v])) = return v
