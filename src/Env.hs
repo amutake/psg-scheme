@@ -2,10 +2,10 @@
 
 module Env where
 
-import Control.Applicative ((<$>))
 import Control.Exception.Lifted (throwIO)
 import Control.Monad.Base (MonadBase)
 import Data.IORef.Lifted (readIORef, modifyIORef)
+import Data.Traversable (Traversable, traverse)
 import qualified Data.Map as Map
 
 import Types
@@ -47,20 +47,19 @@ union m (Global m') = Global $ Map.union m m'
 union m (Extended m' r) = Extended (Map.union m m') r
 
 splitIdents :: MonadBase IO m => List Value -> m (Ident, List Ident)
-splitIdents (ProperList []) = throwIO $ Undefined "syntax error"
-splitIdents (ProperList idents) = do
-    name:params <- extractIdents idents
-    return (name, ProperList params)
-splitIdents (DottedList [] _) = throwIO $ Undefined "syntax error"
-splitIdents (DottedList idents param) = do
-    param':[] <- extractIdents [param]
-    name:params <- extractIdents idents
-    return (name, DottedList params param')
+splitIdents vals = extractIdents vals >>= split
+  where
+    split (ProperList []) = throwIO $ Undefined "syntax error"
+    split (ProperList (name:params)) = return (name, ProperList params)
+    split (DottedList [] _) = throwIO $ Undefined "syntax error"
+    split (DottedList (name:params) param) =
+        return (name, DottedList params param)
 
-extractIdents :: MonadBase IO m => [Value] -> m [Ident]
-extractIdents [] = return []
-extractIdents ((Ident s):vals) = (s:) <$> extractIdents vals
-extractIdents (s:_) = throwIO $ Undefined $ show s
+extractIdents :: (MonadBase IO m, Traversable t) => t Value -> m (t Ident)
+extractIdents = traverse extract
+  where
+    extract (Ident i) = return i
+    extract s = throwIO $ Undefined $ show s
 
 setVar :: MonadBase IO m => EnvRef -> Ident -> Value -> m Value
 setVar ref ident val = do
