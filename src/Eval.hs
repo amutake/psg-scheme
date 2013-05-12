@@ -35,6 +35,11 @@ evalList env (ProperList ((Ident "lambda"):(Ident p):body)) =
 evalList env (ProperList ((Ident "lambda"):(List ids):body)) = do
     ids' <- extractIdents ids
     return $ Func $ Lambda ids' body env
+evalList env (ProperList ((Ident "if"):p:true:[false])) = do
+    p' <- eval env p
+    case p' of
+        Bool True -> eval env true
+        _ -> eval env false
 evalList env (ProperList ((Ident i):vals)) = do
     v <- lookupEnv env i
     case v of
