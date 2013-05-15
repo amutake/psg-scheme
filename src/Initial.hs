@@ -18,6 +18,7 @@ primitives = fromList
     , ("-", Func $ Primitive primMinus)
     , ("*", Func $ Primitive primMult)
     , ("/", Func $ Primitive primDiv)
+    , ("=", Func $ Primitive primEqual)
     ]
 
 primPlus :: MonadBase IO m => [Value] -> m Value
@@ -47,3 +48,13 @@ primDiv (x:xs) = foldM div' x xs
   where
     div' (Number n) (Number m) = return $ Number $ n `div` m
     div' _ _ = throwIO $ TypeMismatch "Number"
+
+primEqual :: MonadBase IO m => [Value] -> m Value
+primEqual [] = throwIO $ Undefined "at least two argument"
+primEqual (_:[]) = throwIO $ Undefined "at least two argument"
+primEqual (x:xs)
+    | all isNumber (x:xs) = return $ Bool $ all (== x) xs
+    | otherwise = throwIO $ TypeMismatch "Number"
+  where
+    isNumber (Number _) = True
+    isNumber _ = False
