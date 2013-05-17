@@ -1,6 +1,6 @@
-module Syntax.After where
+module Types.Syntax.After where
 
-import Types (List (..), Ident)
+import Types.Util
 
 data Expr
     = Const Const
