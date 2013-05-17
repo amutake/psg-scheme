@@ -1,5 +1,6 @@
 cabal-dev/
 dist/
+memo/
 
 src/Sandbox.hs
 test.sh
