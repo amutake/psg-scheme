@@ -30,19 +30,6 @@ instance Show Expr where
     show (If b t f) = "(if " ++ show b ++ " " ++ show t ++ " " ++ show f ++ ")"
     show Undefined = "<#undef>"
 
-data Const
-    = Bool Bool
-    | Number Integer
-    | String String
-    | Nil
-
-instance Show Const where
-    show (Bool True) = "#t"
-    show (Bool False) = "#f"
-    show (Number n) = show n
-    show (String s) = show s
-    show Nil = "()"
-
 data Prim
     = Add
     | Sub
