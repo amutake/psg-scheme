@@ -64,6 +64,7 @@ normalizeList (ProperList ((B.Ident "if"):_)) =
 normalizeList (ProperList (f:params)) =
     A.Apply <$> normalizeExpr f <*> mapM normalizeExpr params
 normalizeList (ProperList []) = return $ A.Const Nil
+normalizeList (DottedList _ _) = throwIO $ SyntaxError "dotted list"
 
 splitArgs :: MonadBase IO m => List B.Expr -> m (Ident, A.Args)
 splitArgs exprs = extractIdents exprs >>= split

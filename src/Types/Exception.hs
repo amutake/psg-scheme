@@ -10,8 +10,9 @@ import Types.Util
 
 data SchemeException
     = ParseError Doc
-    | NotFunction Ident
-    | Undefined String
+    | NotFunction String
+    | Unbind Ident
+    | NumArgs String
     | TypeMismatch String
     | SyntaxError String
     | Exit

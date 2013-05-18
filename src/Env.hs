@@ -7,48 +7,53 @@ import Control.Monad.Base (MonadBase)
 import Data.IORef.Lifted (readIORef, modifyIORef)
 import qualified Data.Map as Map
 
-import Types
+import Types.Env
+import Types.Exception
+import Types.Syntax.After
+import Types.Util
 
-lookupEnv :: MonadBase IO m => EnvRef -> Ident -> m Value
-lookupEnv ref ident = readIORef ref >>= lookupEnv'
+lookupEnv :: MonadBase IO m => EnvRef -> Ident -> m Expr
+lookupEnv ref var = readIORef ref >>= lookupEnv'
   where
     lookupEnv' (Global map') =
-        maybe (throwIO $ Undefined ident) return $ Map.lookup ident map'
+        maybe (throwIO $ Unbind var) return $ Map.lookup var map'
     lookupEnv' (Extended map' ref') =
-        maybe (lookupEnv ref' ident) return $ Map.lookup ident map'
+        maybe (lookupEnv ref' var) return $ Map.lookup var map'
 
-define :: MonadBase IO m => EnvRef -> Ident -> Value -> m Value
-define ref ident val = do
-    modifyIORef ref (insert ident val)
-    return $ Ident ident
+define :: MonadBase IO m => EnvRef -> Ident -> Expr -> m Expr
+define ref var expr = do
+    modifyIORef ref (insert var expr)
+    return $ Var var
 
-defines :: MonadBase IO m => EnvRef -> List Ident -> [Value] -> m ()
-defines ref (ProperList idents) vals
-    | length idents == length vals = do
-        modifyIORef ref $ union $ Map.fromList $ zip idents vals
-    | otherwise = throwIO $ Undefined "num args"
-defines ref (DottedList idents ident) vals
-    | length idents > length vals = throwIO $ Undefined "num args"
+defines :: MonadBase IO m => EnvRef -> Args -> [Expr] -> m ()
+defines ref (Args (ProperList args)) exprs
+    | length args == length exprs = do
+        modifyIORef ref $ union $ Map.fromList $ zip args exprs
+    | otherwise = throwIO $ NumArgs "not match"
+defines ref (Args (DottedList args arg)) exprs
+    | length args > length exprs = throwIO $ NumArgs "not match"
     | otherwise = do
-        let (init', last') = splitAt (length idents) vals
-        modifyIORef ref $ union $ Map.fromList $ zip idents init'
-        modifyIORef ref $ insert ident $ List $ ProperList last'
+        let (init', last') = splitAt (length args) exprs
+        modifyIORef ref $ union $ Map.fromList $ zip args init'
+        case last' of
+            [] -> modifyIORef ref $ insert arg $ Const Nil
+            x:xs -> modifyIORef ref $ insert arg $ Apply x xs
 
-insert :: Ident -> Value -> Env -> Env
-insert ident val (Global m) = Global $ Map.insert ident val m
-insert ident val (Extended m r) = Extended (Map.insert ident val m) r
+insert :: Ident -> Expr -> Env -> Env
+insert var expr (Global m) = Global $ Map.insert var expr m
+insert var expr (Extended m r) = Extended (Map.insert var expr m) r
 
-union :: Map.Map Ident Value -> Env -> Env
+union :: Map.Map Ident Expr -> Env -> Env
 union m (Global m') = Global $ Map.union m m'
 union m (Extended m' r) = Extended (Map.union m m') r
 
-setVar :: MonadBase IO m => EnvRef -> Ident -> Value -> m Value
-setVar ref ident val = readIORef ref >>= set
+setVar :: MonadBase IO m => EnvRef -> Ident -> Expr -> m Expr
+setVar ref var expr = readIORef ref >>= set
   where
-    set (Global map') = set' map' $ throwIO $ Undefined ident
-    set (Extended map' ref') = set' map' $ setVar ref' ident val
+    set (Global map') = set' map' $ throwIO $ Unbind var
+    set (Extended map' ref') = set' map' $ setVar ref' var expr
     set' map' els
-        | Map.member ident map' = do
-              modifyIORef ref $ insert ident val
-              return val
+        | Map.member var map' = do
+              modifyIORef ref $ insert var expr
+              return expr
         | otherwise = els
