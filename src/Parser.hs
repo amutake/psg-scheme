@@ -11,62 +11,58 @@ import Data.Monoid (mempty)
 import Text.Trifecta hiding (parseString, doc)
 import qualified Text.Trifecta as T
 
-import Types
+import Types.Exception
+import Types.Syntax.Before
+import Types.Util
 
-parse :: MonadBase IO m => String -> SchemeT m Value
-parse str = case T.parseString parseValue mempty str of
-    Success val -> return val
+parse :: MonadBase IO m => String -> m Expr
+parse str = case T.parseString parseExpr mempty str of
+    Success expr -> return expr
     Failure doc -> throwIO $ ParseError doc
 
-parseValue :: Parser Value
-parseValue = between spaces spaces $
-    parseBool <|>
-    parseNumber <|>
-    parseString <|>
+parseExpr :: Parser Expr
+parseExpr = between spaces spaces $
+    parseConst <|>
     parseList <|>
     parseQuote <|>
     parseIdent
 
-parseBool :: Parser Value
+parseConst :: Parser Expr
+parseConst = Const <$> (parseBool <|> parseNumber <|> parseString)
+
+parseBool :: Parser Const
 parseBool = parseTrue <|> parseFalse
   where
     parseTrue = symbol "#t" $> Bool True
     parseFalse = symbol "#f" $> Bool False
 
-parseNumber :: Parser Value
+parseNumber :: Parser Const
 parseNumber = try . token $ Number <$>
     integer' <* notFollowedBy identChar
 
-parseString :: Parser Value
+parseString :: Parser Const
 parseString = try $ String <$> stringLiteral
 
-parseList :: Parser Value
-parseList = flattenList . List <$> (parseProperList <|> parseDottedList)
+parseList :: Parser Expr
+parseList = List <$> (parseProperList <|> parseDottedList)
 
-parseProperList :: Parser (List Value)
+parseProperList :: Parser (List Expr)
 parseProperList = try . parens $
-    ProperList <$> many parseValue
+    ProperList <$> many parseExpr
 
-parseDottedList :: Parser (List Value)
+parseDottedList :: Parser (List Expr)
 parseDottedList = try . parens $ DottedList <$>
-    some parseValue <* symbol "." <*> parseValue
+    some parseExpr <* symbol "." <*> parseExpr
 
-flattenList :: Value -> Value
-flattenList (List (DottedList xs x)) = case x of
-    List (ProperList ys) -> List $ ProperList $ map flattenList $ xs ++ ys
-    List (DottedList ys y) -> List $ DottedList (map flattenList $ xs ++ ys) y
-    y -> List $ DottedList xs y
-flattenList v = v
-
-parseQuote :: Parser Value
+parseQuote :: Parser Expr
 parseQuote = List . ProperList <$>
-    (two <$> (symbol "'" $> Ident "quote") <*> parseValue)
+    (two <$> (symbol "'" $> Ident "quote") <*> parseExpr)
   where
     two x y = [x, y]
 
-parseIdent :: Parser Value
+parseIdent :: Parser Expr
 parseIdent = Ident . map toLower <$> (
-    notFollowedBy (Ident <$> symbol "." <|> parseNumber) *>
+    notFollowedBy (Ident <$> symbol "." <|> Const <$> parseNumber) *>
     token (some identChar)
     )
 

@@ -7,6 +7,19 @@ import Data.Traversable (Traversable (..))
 
 type Ident = String
 
+data Const
+    = Bool Bool
+    | Number Integer
+    | String String
+    | Nil
+
+instance Show Const where
+    show (Bool True) = "#t"
+    show (Bool False) = "#f"
+    show (Number n) = show n
+    show (String s) = show s
+    show Nil = "()"
+
 data List a
     = ProperList [a]
     | DottedList [a] a
