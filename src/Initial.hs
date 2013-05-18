@@ -4,7 +4,6 @@ module Initial where
 
 import Data.Map (Map, fromList)
 
-import Types.Env
 import Types.Syntax.After
 import Types.Util
 

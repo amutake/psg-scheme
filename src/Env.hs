@@ -7,7 +7,6 @@ import Control.Monad.Base (MonadBase)
 import Data.IORef.Lifted (readIORef, modifyIORef)
 import qualified Data.Map as Map
 
-import Types.Env
 import Types.Exception
 import Types.Syntax.After
 import Types.Util

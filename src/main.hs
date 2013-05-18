@@ -17,9 +17,8 @@ import Conversion.CPS (cps)
 import Eval (eval)
 import Initial (initialEnv)
 import Parser (parse)
-import Types.Env (EnvRef)
 import Types.Exception (SchemeException (..))
-import Types.Syntax.After (Expr)
+import Types.Syntax.After (Expr, EnvRef)
 
 main :: IO ()
 main = newIORef initialEnv >>= repl
@@ -28,11 +27,11 @@ main = newIORef initialEnv >>= repl
 scheme :: (MonadBaseControl IO m, MonadIO m) => EnvRef -> String -> m Expr
 scheme ref s = do
     be <- parse s
-    liftIO $ print be
+    liftIO $ putStrLn $ "parse: " ++ show be
     ae <- normalize be
-    liftIO $ print ae
+    liftIO $ putStrLn $ "normalize: " ++ show ae
     let ce = cps ae
-    liftIO $ print ce
+    liftIO $ putStrLn $ "cps: " ++ show ce
     eval ref ce
 #else
 scheme :: MonadBaseControl IO m => EnvRef -> String -> m Expr

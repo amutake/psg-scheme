@@ -22,6 +22,7 @@ cpsExpr (Lambda args e) cc = do
   where
     cons v (Args (ProperList vs)) = params $ v : vs
     cons v (Args (DottedList vs v')) = Args $ DottedList (v : vs) v'
+cpsExpr f@(Func _ _ _) _ = return f
 cpsExpr (Apply p@(Prim _) args) cc = do
     vars <- getVars $ length args
     go cc vars $ zip vars args
