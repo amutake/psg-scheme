@@ -3,7 +3,11 @@
 module Main where
 
 import Control.Exception.Lifted (try)
+#ifdef DEBUG
+import Control.Monad.IO.Class (MonadIO (..))
+#else
 import Control.Monad ((>=>))
+#endif
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.IORef
 import System.IO (hFlush, stdout)
@@ -20,8 +24,20 @@ import Types.Syntax.After (Expr)
 main :: IO ()
 main = newIORef initialEnv >>= repl
 
+#ifdef DEBUG
+scheme :: (MonadBaseControl IO m, MonadIO m) => EnvRef -> String -> m Expr
+scheme ref s = do
+    be <- parse s
+    liftIO $ print be
+    ae <- normalize be
+    liftIO $ print ae
+    let ce = cps ae
+    liftIO $ print ce
+    eval ref ce
+#else
 scheme :: MonadBaseControl IO m => EnvRef -> String -> m Expr
 scheme ref = parse >=> normalize >=> eval ref . cps
+#endif
 
 repl :: EnvRef -> IO ()
 repl env = do

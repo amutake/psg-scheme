@@ -5,3 +5,4 @@ memo/
 src/Sandbox.hs
 test.sh
 exec.sh
+debug.sh
