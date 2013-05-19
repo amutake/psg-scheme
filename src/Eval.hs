@@ -15,7 +15,7 @@ import Types.Util
 
 eval :: MonadBase IO m => EnvRef -> Expr -> m Expr
 eval _ c@(Const _) = return c
-eval ref (Var v) = lookupEnv ref v
+eval ref (Var v) = lookupEnv ref v >>= eval ref
 eval ref (Define v e) = eval ref e >>= define ref v
 eval ref (Lambda args body) = return $ Func args body ref
 eval _ f@(Func _ _ _) = return f
@@ -23,6 +23,9 @@ eval ref (Apply f es) = do
     f' <- eval ref f
     es' <- mapM (eval ref) es
     apply f' es'
+eval ref (CallCC cc args body) = do
+    defines ref args [cc]
+    eval ref body
 eval _ p@(Prim _) = return p
 eval _ (Quote e) = return e
 eval ref (Begin es) = mapM (eval ref) (init es) >> eval ref (last es)
@@ -33,6 +36,7 @@ eval ref (If b t f) = do
         Const (Bool True) -> eval ref t
         _ -> eval ref f
 eval _ Undefined = return Undefined
+eval ref (End e) = eval ref e >>= throwIO . Next
 
 apply :: MonadBase IO m => Expr -> [Expr] -> m Expr
 apply (Prim f) es = applyPrim f es

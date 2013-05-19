@@ -28,9 +28,9 @@ defines :: MonadBase IO m => EnvRef -> Args -> [Expr] -> m ()
 defines ref (Args (ProperList args)) exprs
     | length args == length exprs = do
         modifyIORef ref $ union $ Map.fromList $ zip args exprs
-    | otherwise = throwIO $ NumArgs "not match"
+    | otherwise = throwIO $ NumArgs $ "not match: args: " ++ show args ++ ", exprs: " ++ show exprs
 defines ref (Args (DottedList args arg)) exprs
-    | length args > length exprs = throwIO $ NumArgs "not match"
+    | length args > length exprs = throwIO $ NumArgs $ "not match: args: " ++ show args ++ ", exprs: " ++ show exprs
     | otherwise = do
         let (init', last') = splitAt (length args) exprs
         modifyIORef ref $ union $ Map.fromList $ zip args init'

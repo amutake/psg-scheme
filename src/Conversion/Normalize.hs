@@ -61,6 +61,12 @@ normalizeList (ProperList ((B.Ident "if"):b:[t])) =
     A.If <$> normalizeExpr b <*> normalizeExpr t <*> return A.Undefined
 normalizeList (ProperList ((B.Ident "if"):_)) =
     throwIO $ SyntaxError "if"
+normalizeList (ProperList ((B.Ident "call/cc"):[e])) = callCC e
+normalizeList (ProperList ((B.Ident "call/cc"):_)) =
+    throwIO $ SyntaxError "call/cc"
+normalizeList (ProperList ((B.Ident "call-with-current-continuation"):[e])) = callCC e
+normalizeList (ProperList ((B.Ident "call-with-current-continuation"):_)) =
+    throwIO $ SyntaxError "call/cc"
 normalizeList (ProperList (f:params)) =
     A.Apply <$> normalizeExpr f <*> mapM normalizeExpr params
 normalizeList (ProperList []) = return $ A.Const Nil
@@ -85,6 +91,13 @@ lambdaBody :: MonadBase IO m => A.Args -> [B.Expr] -> m A.Expr
 lambdaBody _ [] = throwIO $ SyntaxError "lambda body must be one or more expressions"
 lambdaBody args [e] = A.Lambda args <$> normalizeExpr e
 lambdaBody args es = A.Lambda args . A.Begin <$> mapM normalizeExpr es
+
+callCC :: MonadBase IO m => B.Expr -> m A.Expr
+callCC e = do
+    e' <- normalizeExpr e
+    case e' of
+        A.Lambda args body -> return $ A.CallCC A.Undefined args body
+        _ -> throwIO $ SyntaxError "call/cc"
 
 prim :: Ident -> A.Expr
 prim "+" = A.Prim A.Add
