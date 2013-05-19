@@ -12,6 +12,7 @@ data Const
     | Number Integer
     | String String
     | Nil
+    deriving (Eq)
 
 instance Show Const where
     show (Bool True) = "#t"

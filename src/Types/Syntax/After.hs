@@ -18,6 +18,7 @@ data Expr
     | Set Ident Expr
     | If Expr Expr Expr
     | Undefined
+    deriving (Eq)
 
 type CC = Expr
 
@@ -47,6 +48,7 @@ data Prim
     | Mul
     | Div
     | Equal
+    deriving (Eq)
 
 instance Show Prim where
     show Add = "+"
@@ -55,7 +57,7 @@ instance Show Prim where
     show Div = "/"
     show Equal = "="
 
-newtype Args = Args (List Ident)
+newtype Args = Args (List Ident) deriving (Eq)
 
 instance Show Args where
     show (Args (ProperList xs)) = "(" ++ unwords xs ++ ")"

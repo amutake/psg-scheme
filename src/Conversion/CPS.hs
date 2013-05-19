@@ -14,7 +14,8 @@ cpsExpr c@(Const _) cc = return $ Apply cc [c]
 cpsExpr v@(Var _) cc = return $ Apply cc [v]
 cpsExpr (Define v e) cc = do
     var <- getVar
-    cpsExpr e $ Lambda (params [var]) $ Apply cc [Define v $ Var var]
+    e' <- cpsExpr e $ Lambda (params [var]) $ Var var
+    return $ Apply cc [Define v e']
 cpsExpr (Lambda args e) cc = do
     var <- getVar
     e' <- cpsExpr e $ Var var

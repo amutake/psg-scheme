@@ -8,6 +8,7 @@ import Data.IORef.Lifted (newIORef)
 import Data.Map (empty)
 
 import Env
+import Primitives
 import Types.Exception
 import Types.Syntax.After
 import Types.Util
@@ -42,4 +43,8 @@ apply (Func args body closure) es = do
 apply e _ = throwIO $ NotFunction $ show e
 
 applyPrim :: MonadBase IO m => Prim -> [Expr] -> m Expr
-applyPrim = undefined
+applyPrim Add = primAdd
+applyPrim Sub = primSub
+applyPrim Mul = primMul
+applyPrim Div = primDiv
+applyPrim Equal = primEqual
