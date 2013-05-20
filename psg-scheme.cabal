@@ -25,6 +25,7 @@ executable psg-scheme
   hs-source-dirs:    src
   ghc-options:       -Wall
                      -fno-warn-unused-do-bind
+                     -O2
   if flag(debug)
     cpp-options:     -DDEBUG
   other-modules:
