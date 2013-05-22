@@ -3,12 +3,14 @@ module Types.Syntax.After where
 import Data.IORef.Lifted (IORef)
 import Data.Map (Map)
 
+import qualified Types.Syntax.Before as B
 import Types.Util
 
 data Expr
     = Const Const
     | Var Ident
     | Define Ident Expr
+    | DefineMacro Args B.Expr
     | Lambda Args Expr
     | Func Args Expr EnvRef
     | Apply Expr [Expr]
@@ -28,6 +30,7 @@ instance Show Expr where
     show (Const c) = show c
     show (Var v) = v
     show (Define v e) = "(define " ++ v ++ " " ++ show e ++ ")"
+    show (DefineMacro args e) = "(define-macro " ++ show args ++ " " ++ show e ++ ")"
     show (Lambda args e) = "(lambda " ++ show args ++ " " ++ show e ++ ")"
     show (Func args e _) = "(function " ++ show args ++ " " ++ show e ++ ")"
     show (Apply e es) = "(" ++ unwords (map show $ e:es) ++ ")"

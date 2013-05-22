@@ -5,28 +5,31 @@ module Conversion.Macro where
 import Control.Applicative ((<$>))
 import Control.Exception.Lifted (throwIO)
 import Control.Monad.Base (MonadBase)
+import Control.Monad.State (MonadState (..))
 import Data.Map (Map)
 import qualified Data.Map as M
 
+import Types.Core
 import Types.Exception
 import Types.Macro
 import Types.Syntax.Before
 import Types.Util
 
-macro :: MonadBase IO m => Macro -> Expr -> m Expr
-macro _ c@(Const _) = return c
-macro _ (Ident i) = return $ Ident i
-macro m (List l) = macroList m l
+macro :: MonadBase IO m => Expr -> SchemeT m Expr
+macro c@(Const _) = return c
+macro (Ident i) = return $ Ident i
+macro (List l) = macroList l
 
-macroList :: MonadBase IO m => Macro -> List Expr -> m Expr
-macroList m e@(ProperList ((Ident i):args)) = do
+macroList :: MonadBase IO m => List Expr -> SchemeT m Expr
+macroList e@(ProperList ((Ident i):args)) = do
+    m <- get
     case M.lookup i m of
         Just body -> conv args body
         Nothing -> List <$> return e
-macroList _ e@(ProperList _) = List <$> return e
-macroList _ e@(DottedList _ _) = List <$> return e
+macroList e@(ProperList _) = List <$> return e
+macroList e@(DottedList _ _) = List <$> return e
 
-conv :: MonadBase IO m => [Expr] -> MacroBody -> m Expr
+conv :: MonadBase IO m => [Expr] -> MacroBody -> SchemeT m Expr
 conv args (MacroBody args' body) = do
     pairs <- argPairs args' args
     return $ mapExpr pairs body

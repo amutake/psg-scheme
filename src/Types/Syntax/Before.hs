@@ -6,6 +6,7 @@ data Expr
     = Const Const
     | Ident Ident
     | List (List Expr)
+    deriving (Eq)
 
 instance Show Expr where
     show (Const c) = show c
