@@ -36,10 +36,10 @@ normalizeList (ProperList ((B.Ident "define"):(B.List vars):body)) = do
 normalizeList (ProperList ((B.Ident "define"):_)) =
     throwIO $ SyntaxError "define"
 normalizeList (ProperList ((B.Ident "lambda"):(B.Ident args):body)) = do
-    let args' = A.Args $ DottedList [] args
+    let args' = Args $ DottedList [] args
     lambdaBody args' body
 normalizeList (ProperList ((B.Ident "lambda"):(B.List args):body)) = do
-    args' <- A.Args <$> extractIdents args
+    args' <- Args <$> extractIdents args
     lambdaBody args' body
 normalizeList (ProperList ((B.Ident "lambda"):_)) =
     throwIO $ SyntaxError "lambda"
@@ -72,14 +72,14 @@ normalizeList (ProperList (f:params)) =
 normalizeList (ProperList []) = return $ A.Const Nil
 normalizeList (DottedList _ _) = throwIO $ SyntaxError "dotted list"
 
-splitArgs :: MonadBase IO m => List B.Expr -> m (Ident, A.Args)
+splitArgs :: MonadBase IO m => List B.Expr -> m (Ident, Args)
 splitArgs exprs = extractIdents exprs >>= split
   where
     split (ProperList []) = throwIO $ SyntaxError "define must have variable name"
-    split (ProperList (name:params)) = return (name, A.Args $ ProperList params)
+    split (ProperList (name:params)) = return (name, Args $ ProperList params)
     split (DottedList [] _) = throwIO $ SyntaxError "define must have variable name"
     split (DottedList (name:params) param) =
-        return (name, A.Args $ DottedList params param)
+        return (name, Args $ DottedList params param)
 
 extractIdents :: (MonadBase IO m, Traversable t) => t B.Expr -> m (t Ident)
 extractIdents = traverse extract
@@ -87,7 +87,7 @@ extractIdents = traverse extract
     extract (B.Ident i) = return i
     extract s = throwIO $ SyntaxError $ show s
 
-lambdaBody :: MonadBase IO m => A.Args -> [B.Expr] -> m A.Expr
+lambdaBody :: MonadBase IO m => Args -> [B.Expr] -> m A.Expr
 lambdaBody _ [] = throwIO $ SyntaxError "lambda body must be one or more expressions"
 lambdaBody args [e] = A.Lambda args <$> normalizeExpr e
 lambdaBody args es = A.Lambda args . A.Begin <$> mapM normalizeExpr es

@@ -60,9 +60,3 @@ instance Show Prim where
     show Mul = "*"
     show Div = "/"
     show Equal = "="
-
-newtype Args = Args (List Ident) deriving (Eq)
-
-instance Show Args where
-    show (Args (ProperList xs)) = "(" ++ unwords xs ++ ")"
-    show (Args (DottedList xs x)) = "(" ++ unwords xs ++ " . " ++ x ++ ")"

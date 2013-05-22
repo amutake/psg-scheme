@@ -41,3 +41,9 @@ instance Foldable List where
 instance Traversable List where
     traverse f (ProperList xs) = ProperList <$> traverse f xs
     traverse f (DottedList xs x) = DottedList <$> traverse f xs <*> f x
+
+newtype Args = Args (List Ident) deriving (Eq)
+
+instance Show Args where
+    show (Args (ProperList xs)) = "(" ++ unwords xs ++ ")"
+    show (Args (DottedList xs x)) = "(" ++ unwords xs ++ " . " ++ x ++ ")"
