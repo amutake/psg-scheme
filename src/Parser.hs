@@ -15,13 +15,16 @@ import Types.Exception
 import Types.Syntax.Before
 import Types.Util
 
-parse :: Monad m => String -> SchemeT m Expr
-parse str = case T.parseString parseExpr mempty str of
+parse :: Monad m => String -> SchemeT m [Expr]
+parse str = case T.parseString parseExprs mempty str of
     Success expr -> return expr
     Failure doc -> throwError $ ParseError doc
 
+parseExprs :: Parser [Expr]
+parseExprs = many parseExpr
+
 parseExpr :: Parser Expr
-parseExpr = between spaces spaces $
+parseExpr = between blank blank $
     parseConst <|>
     parseList <|>
     parseQuote <|>
@@ -68,3 +71,6 @@ parseIdent = Ident . map toLower <$> (
 
 identChar :: Parser Char
 identChar = alphaNum <|> oneOf "!$%&*+-./<=>?@^_"
+
+blank :: Parser ()
+blank = spaces <|> skipMany newline <|> skipMany tab

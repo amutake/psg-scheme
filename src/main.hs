@@ -29,20 +29,22 @@ main :: IO ()
 main = newIORef initialEnv >>= repl empty
 
 #ifdef DEBUG
-scheme :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> String -> SchemeT m Expr
+scheme :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> String -> SchemeT m [Expr]
 scheme ref s = do
-    be <- parse s
-    liftIO $ putStrLn $ "parse: " ++ show be
-    ae <- normalize be
-    liftIO $ putStrLn $ "normalize: " ++ show ae
-    me <- macro ae
-    liftIO $ putStrLn $ "macro: " ++ show me
-    let ce = cps me
-    liftIO $ putStrLn $ "cps: " ++ show ce
-    eval ref ce
+    bes <- parse s
+    liftIO $ putStrLn $ "parse: " ++ show bes
+    mapM (\be -> do
+        ae <- normalize be
+        liftIO $ putStrLn $ "normalize: " ++ show ae
+        me <- macro ae
+        liftIO $ putStrLn $ "macro: " ++ show me
+        let ce = cps me
+        liftIO $ putStrLn $ "cps: " ++ show ce
+        eval ref ce
+        ) bes
 #else
-scheme :: (Functor m, Monad m, MonadBase IO m, MonadIO m) => EnvRef -> String -> SchemeT m Expr
-scheme ref = parse >=> normalize >=> macro >=> eval ref . cps
+scheme :: (Functor m, Monad m, MonadBase IO m, MonadIO m) => EnvRef -> String -> SchemeT m [Expr]
+scheme ref = parse >=> mapM (normalize >=> macro >=> eval ref . cps)
 #endif
 
 repl :: Macro -> EnvRef -> IO ()
@@ -50,13 +52,10 @@ repl mac ref = do
     putStr "scheme> "
     hFlush stdout
     str <- getLine
-    (result, mac') <- runStateT (runErrorT $ runSchemeT $ scheme ref str) mac
-    case result of
+    (results, mac') <- runStateT (runErrorT $ runSchemeT $ scheme ref str) mac
+    case results of
         Left Exit -> putStrLn "Bye."
-        Left (Next e) -> print e >> repl mac' ref
-        Left (err :: SchemeException) -> do
-            print err
-            repl mac' ref
-        Right val -> do
-            liftIO $ print val
-            repl mac' ref
+        Left (err :: SchemeException) -> next err mac' ref
+        Right es -> next es mac' ref
+  where
+    next e m r = print e >> repl m r

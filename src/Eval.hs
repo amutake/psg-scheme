@@ -39,7 +39,7 @@ eval ref (Apply f es) = do
     liftIO $ putStrLn $ ("  apply-after: " ++) $ show $ Apply f' es'
 #endif
     case f' of
-        End -> throwError . Next . last $ es'
+        End -> return $ last es'
         _ -> apply f' es'
 eval ref (CallCC cc args body) = do
     cc' <- eval ref cc
