@@ -20,7 +20,7 @@ data Expr
     | Set Ident Expr
     | If Expr Expr Expr
     | Undefined
-    | End Expr
+    | End
     deriving (Eq)
 
 type CC = Expr
@@ -39,8 +39,8 @@ instance Show Expr where
     show (Begin es) = "(begin " ++ unwords (map show es) ++ ")"
     show (Set v e) = "(set! " ++ v ++ " " ++ show e ++ ")"
     show (If b t f) = "(if " ++ show b ++ " " ++ show t ++ " " ++ show f ++ ")"
-    show Undefined = "<#undef>"
-    show (End e) = "(end " ++ show e ++ ")"
+    show Undefined = "#undef"
+    show End = "#end"
 
 data Env
     = Global (Map Ident Expr)

@@ -7,7 +7,7 @@ import Types.Syntax.After
 import Types.Util
 
 cps :: Expr -> Expr
-cps e = evalState (cpsExpr e (Lambda (Args (ProperList ["##0"])) (End (Var "##0")))) 1
+cps e = evalState (cpsExpr e End) 1
 
 cpsExpr :: Expr -> CC -> State Int Expr
 cpsExpr c@(Const _) cc = return $ Apply cc [c]
@@ -69,7 +69,7 @@ cpsExpr (If b t f) cc = do
     e2 <- cpsExpr f cc
     cpsExpr b $ Lambda (params [var]) $ If (Var var) e1 e2
 cpsExpr Undefined _ = return Undefined
-cpsExpr n@(End _) _ = return n
+cpsExpr End _ = return End
 
 getVar :: State Int Ident
 getVar = do

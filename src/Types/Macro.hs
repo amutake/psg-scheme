@@ -7,4 +7,4 @@ import Types.Syntax.After
 
 type Macro = Map Ident MacroBody
 
-data MacroBody = MacroBody Args Expr deriving (Show)
+data MacroBody = MacroBody Args Expr EnvRef

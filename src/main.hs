@@ -37,7 +37,7 @@ scheme ref s = do
     liftIO $ putStrLn $ "normalize: " ++ show ae
     me <- macro ae
     liftIO $ putStrLn $ "macro: " ++ show me
-    let ce = cps ae
+    let ce = cps me
     liftIO $ putStrLn $ "cps: " ++ show ce
     eval ref ce
 #else
