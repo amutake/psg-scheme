@@ -68,6 +68,10 @@ cpsExpr (If b t f) cc = do
     e1 <- cpsExpr t cc
     e2 <- cpsExpr f cc
     cpsExpr b $ Lambda (params [var]) $ If (Var var) e1 e2
+cpsExpr (Load e) cc = do
+    var <- getVar
+    e' <- cpsExpr e $ Lambda (params [var]) $ Var var
+    return $ Apply cc [Load e']
 cpsExpr Undefined cc = return $ Apply cc [Undefined]
 cpsExpr End cc = return $ Apply cc [End]
 

@@ -70,6 +70,9 @@ normalizeList (ProperList ((B.Ident "call/cc"):_)) =
 normalizeList (ProperList ((B.Ident "call-with-current-continuation"):[e])) = callCC e
 normalizeList (ProperList ((B.Ident "call-with-current-continuation"):_)) =
     throwError $ SyntaxError "call/cc"
+normalizeList (ProperList ((B.Ident "load"):[e])) = A.Load <$> normalizeExpr e
+normalizeList (ProperList ((B.Ident "load"):_)) =
+    throwError $ SyntaxError "load"
 normalizeList (ProperList (f:params)) =
     A.Apply <$> normalizeExpr f <*> mapM normalizeExpr params
 normalizeList (ProperList []) = return $ A.Const Nil

@@ -16,6 +16,7 @@ data SchemeException
     | NumArgs String
     | TypeMismatch String
     | SyntaxError String
+    | IOError IOError
     | Exit
     deriving (Show, Typeable)
 

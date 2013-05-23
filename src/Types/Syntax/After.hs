@@ -19,6 +19,7 @@ data Expr
     | Begin [Expr]
     | Set Ident Expr
     | If Expr Expr Expr
+    | Load Expr
     | Undefined
     | End
     deriving (Eq)
@@ -39,6 +40,7 @@ instance Show Expr where
     show (Begin es) = "(begin " ++ unwords (map show es) ++ ")"
     show (Set v e) = "(set! " ++ v ++ " " ++ show e ++ ")"
     show (If b t f) = "(if " ++ show b ++ " " ++ show t ++ " " ++ show f ++ ")"
+    show (Load e) = "(load " ++ show e ++ ")"
     show Undefined = "#undef"
     show End = "#end"
 
