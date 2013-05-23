@@ -3,16 +3,16 @@
 module Conversion.Normalize where
 
 import Control.Applicative ((<$>), (<*>))
-import Control.Exception.Lifted (throwIO)
-import Control.Monad.Base (MonadBase)
+import Control.Monad.Error (throwError)
 import Data.Traversable (Traversable, traverse)
 
+import Types.Core
 import Types.Exception
 import qualified Types.Syntax.After as A
 import qualified Types.Syntax.Before as B
 import Types.Util
 
-normalize :: MonadBase IO m => B.Expr -> m A.Expr
+normalize :: (Functor m, Monad m) => B.Expr -> SchemeT m A.Expr
 normalize expr = normalizeExpr $ flattenList expr
 
 flattenList :: B.Expr -> B.Expr
@@ -22,19 +22,19 @@ flattenList (B.List (DottedList xs x)) = case x of
     y -> B.List $ DottedList xs y
 flattenList v = v
 
-normalizeExpr :: MonadBase IO m => B.Expr -> m A.Expr
+normalizeExpr :: (Functor m, Monad m) => B.Expr -> SchemeT m A.Expr
 normalizeExpr (B.Const c) = return $ A.Const c
 normalizeExpr (B.Ident i) = return $ prim i
 normalizeExpr (B.List l) = normalizeList l
 
-normalizeList :: MonadBase IO m => List B.Expr -> m A.Expr
+normalizeList :: (Functor m, Monad m) => List B.Expr -> SchemeT m A.Expr
 normalizeList (ProperList ((B.Ident "define"):(B.Ident var):[expr])) =
     A.Define var <$> normalizeExpr expr
 normalizeList (ProperList ((B.Ident "define"):(B.List vars):body)) = do
     (var, args) <- splitArgs vars
     A.Define var <$> lambdaBody args body
 normalizeList (ProperList ((B.Ident "define"):_)) =
-    throwIO $ SyntaxError "define"
+    throwError $ SyntaxError "define"
 normalizeList (ProperList ((B.Ident "define-macro"):(B.List vars):[body])) = do
     args <- Args <$> extractIdents vars
     A.DefineMacro args <$> normalizeExpr body
@@ -45,11 +45,11 @@ normalizeList (ProperList ((B.Ident "lambda"):(B.List args):body)) = do
     args' <- Args <$> extractIdents args
     lambdaBody args' body
 normalizeList (ProperList ((B.Ident "lambda"):_)) =
-    throwIO $ SyntaxError "lambda"
+    throwError $ SyntaxError "lambda"
 normalizeList (ProperList ((B.Ident "quote"):[e])) =
     A.Quote <$> normalizeExpr e
 normalizeList (ProperList ((B.Ident "quote"):_)) =
-    throwIO $ SyntaxError "quote"
+    throwError $ SyntaxError "quote"
 normalizeList (ProperList ((B.Ident "begin"):[])) = return A.Undefined
 normalizeList (ProperList ((B.Ident "begin"):[e])) = normalizeExpr e
 normalizeList (ProperList ((B.Ident "begin"):es)) =
@@ -57,50 +57,50 @@ normalizeList (ProperList ((B.Ident "begin"):es)) =
 normalizeList (ProperList ((B.Ident "set!"):(B.Ident var):[e])) =
     A.Set var <$> normalizeExpr e
 normalizeList (ProperList ((B.Ident "set!"):_)) =
-    throwIO $ SyntaxError "set!"
+    throwError $ SyntaxError "set!"
 normalizeList (ProperList ((B.Ident "if"):b:t:[f])) =
     A.If <$> normalizeExpr b <*> normalizeExpr t <*> normalizeExpr f
 normalizeList (ProperList ((B.Ident "if"):b:[t])) =
     A.If <$> normalizeExpr b <*> normalizeExpr t <*> return A.Undefined
 normalizeList (ProperList ((B.Ident "if"):_)) =
-    throwIO $ SyntaxError "if"
+    throwError $ SyntaxError "if"
 normalizeList (ProperList ((B.Ident "call/cc"):[e])) = callCC e
 normalizeList (ProperList ((B.Ident "call/cc"):_)) =
-    throwIO $ SyntaxError "call/cc"
+    throwError $ SyntaxError "call/cc"
 normalizeList (ProperList ((B.Ident "call-with-current-continuation"):[e])) = callCC e
 normalizeList (ProperList ((B.Ident "call-with-current-continuation"):_)) =
-    throwIO $ SyntaxError "call/cc"
+    throwError $ SyntaxError "call/cc"
 normalizeList (ProperList (f:params)) =
     A.Apply <$> normalizeExpr f <*> mapM normalizeExpr params
 normalizeList (ProperList []) = return $ A.Const Nil
-normalizeList (DottedList _ _) = throwIO $ SyntaxError "dotted list"
+normalizeList (DottedList _ _) = throwError $ SyntaxError "dotted list"
 
-splitArgs :: MonadBase IO m => List B.Expr -> m (Ident, Args)
+splitArgs :: (Functor m, Monad m) => List B.Expr -> SchemeT m (Ident, Args)
 splitArgs exprs = extractIdents exprs >>= split
   where
-    split (ProperList []) = throwIO $ SyntaxError "define must have variable name"
+    split (ProperList []) = throwError $ SyntaxError "define must have variable name"
     split (ProperList (name:params)) = return (name, Args $ ProperList params)
-    split (DottedList [] _) = throwIO $ SyntaxError "define must have variable name"
+    split (DottedList [] _) = throwError $ SyntaxError "define must have variable name"
     split (DottedList (name:params) param) =
         return (name, Args $ DottedList params param)
 
-extractIdents :: (MonadBase IO m, Traversable t) => t B.Expr -> m (t Ident)
+extractIdents :: (Functor m, Monad m, Traversable t) => t B.Expr -> SchemeT m (t Ident)
 extractIdents = traverse extract
   where
     extract (B.Ident i) = return i
-    extract s = throwIO $ SyntaxError $ show s
+    extract s = throwError $ SyntaxError $ show s
 
-lambdaBody :: MonadBase IO m => Args -> [B.Expr] -> m A.Expr
-lambdaBody _ [] = throwIO $ SyntaxError "lambda body must be one or more expressions"
+lambdaBody :: (Functor m, Monad m) => Args -> [B.Expr] -> SchemeT m A.Expr
+lambdaBody _ [] = throwError $ SyntaxError "lambda body must be one or more expressions"
 lambdaBody args [e] = A.Lambda args <$> normalizeExpr e
 lambdaBody args es = A.Lambda args . A.Begin <$> mapM normalizeExpr es
 
-callCC :: MonadBase IO m => B.Expr -> m A.Expr
+callCC :: (Functor m, Monad m) => B.Expr -> SchemeT m A.Expr
 callCC e = do
     e' <- normalizeExpr e
     case e' of
         A.Lambda args body -> return $ A.CallCC A.Undefined args body
-        _ -> throwIO $ SyntaxError "call/cc"
+        _ -> throwError $ SyntaxError "call/cc"
 
 prim :: Ident -> A.Expr
 prim "+" = A.Prim A.Add

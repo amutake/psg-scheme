@@ -1,31 +1,19 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving
-  , TypeFamilies
-  , FlexibleInstances
-  , MultiParamTypeClasses
-  , UndecidableInstances
-  #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Types.Core where
 
 import Control.Applicative (Applicative)
 import Control.Monad.Base (MonadBase)
+import Control.Monad.Error (MonadError, ErrorT)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State(StateT, MonadState)
 import Control.Monad.Trans.Class (MonadTrans, lift)
-import Control.Monad.Trans.Control
-    ( MonadBaseControl (..)
-    , MonadTransControl (..)
-    , ComposeSt
-    , defaultLiftBaseWith
-    , defaultRestoreM
-    , defaultLiftWith
-    , defaultRestoreT
-    )
 
+import Types.Exception
 import Types.Macro
 
 newtype SchemeT m a = SchemeT
-    { runSchemeT :: StateT Macro m a
+    { runSchemeT :: ErrorT SchemeException (StateT Macro m) a
     } deriving
     ( Functor
     , Applicative
@@ -33,17 +21,8 @@ newtype SchemeT m a = SchemeT
     , MonadIO
     , MonadState Macro
     , MonadBase base
+    , MonadError SchemeException
     )
 
 instance MonadTrans SchemeT where
-    lift = SchemeT . lift
-
-instance MonadTransControl SchemeT where
-    newtype StT SchemeT a = StScheme { unStScheme :: StT (StateT Macro) a }
-    liftWith = defaultLiftWith SchemeT runSchemeT StScheme
-    restoreT = defaultRestoreT SchemeT unStScheme
-
-instance MonadBaseControl base m => MonadBaseControl base (SchemeT m) where
-    newtype StM (SchemeT m) a = StMSchemeT { unStMSchemeT :: ComposeSt SchemeT m a }
-    liftBaseWith = defaultLiftBaseWith StMSchemeT
-    restoreM = defaultRestoreM unStMSchemeT
+    lift = SchemeT . lift . lift

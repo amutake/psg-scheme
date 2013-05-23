@@ -4,21 +4,21 @@ module Parser where
 
 import Control.Applicative ((<|>), (<$>), (<*>), (*>), (<*))
 import Control.Comonad (($>))
-import Control.Exception.Lifted (throwIO)
-import Control.Monad.Base (MonadBase)
+import Control.Monad.Error (MonadError (..))
 import Data.Char (toLower)
 import Data.Monoid (mempty)
 import Text.Trifecta hiding (parseString, doc)
 import qualified Text.Trifecta as T
 
+import Types.Core
 import Types.Exception
 import Types.Syntax.Before
 import Types.Util
 
-parse :: MonadBase IO m => String -> m Expr
+parse :: Monad m => String -> SchemeT m Expr
 parse str = case T.parseString parseExpr mempty str of
     Success expr -> return expr
-    Failure doc -> throwIO $ ParseError doc
+    Failure doc -> throwError $ ParseError doc
 
 parseExpr :: Parser Expr
 parseExpr = between spaces spaces $

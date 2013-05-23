@@ -2,12 +2,15 @@
 
 module Main where
 
-import Control.Exception.Lifted (try)
-import Control.Monad.IO.Class (MonadIO (..))
+#ifdef DEBUG
+#else
 import Control.Monad ((>=>))
-import Control.Monad.State (runStateT, StateT, evalStateT)
-import Control.Monad.Trans.Control (MonadBaseControl)
-import Data.IORef
+#endif
+import Control.Monad.Base (MonadBase)
+import Control.Monad.Error (runErrorT)
+import Control.Monad.IO.Class (MonadIO (..))
+import Control.Monad.State (runStateT)
+import Data.IORef (newIORef)
 import Data.Map (empty)
 import System.IO (hFlush, stdout)
 
@@ -23,13 +26,10 @@ import Types.Macro (Macro)
 import Types.Syntax.After (Expr, EnvRef)
 
 main :: IO ()
-main = do
-    ref <- newIORef initialEnv
-    evalStateT (repl ref) empty
-    return ()
+main = newIORef initialEnv >>= repl empty
 
 #ifdef DEBUG
-scheme :: (MonadBaseControl IO m, MonadIO m) => EnvRef -> String -> SchemeT m Expr
+scheme :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> String -> SchemeT m Expr
 scheme ref s = do
     be <- parse s
     liftIO $ putStrLn $ "parse: " ++ show be
@@ -41,22 +41,22 @@ scheme ref s = do
     liftIO $ putStrLn $ "cps: " ++ show ce
     eval ref ce
 #else
-scheme :: MonadBaseControl IO m => EnvRef -> String -> SchemeT m Expr
+scheme :: (Functor m, Monad m, MonadBase IO m, MonadIO m) => EnvRef -> String -> SchemeT m Expr
 scheme ref = parse >=> normalize >=> macro >=> eval ref . cps
 #endif
 
-repl :: EnvRef -> StateT Macro IO ()
-repl env = do
-    liftIO $ putStr "scheme> "
-    liftIO $ hFlush stdout
-    str <- liftIO getLine
-    result <- runSchemeT (try $ scheme env str)
-    liftIO $ print result
+repl :: Macro -> EnvRef -> IO ()
+repl mac ref = do
+    putStr "scheme> "
+    hFlush stdout
+    str <- getLine
+    (result, mac') <- runStateT (runErrorT $ runSchemeT $ scheme ref str) mac
     case result of
-        Left Exit -> liftIO $ putStrLn "bye."
+        Left Exit -> putStrLn "Bye."
+        Left (Next e) -> print e >> repl mac' ref
         Left (err :: SchemeException) -> do
-            liftIO $ print err
-            repl env
+            print err
+            repl mac' ref
         Right val -> do
             liftIO $ print val
-            repl env
+            repl mac' ref

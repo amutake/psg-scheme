@@ -3,6 +3,7 @@
 module Types.Exception where
 
 import Control.Exception (Exception)
+import Control.Monad.Error.Class (Error)
 import Data.Typeable (Typeable)
 import Text.PrettyPrint.ANSI.Leijen (Doc)
 
@@ -21,3 +22,5 @@ data SchemeException
     deriving (Show, Typeable)
 
 instance Exception SchemeException
+
+instance Error SchemeException

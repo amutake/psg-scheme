@@ -3,8 +3,7 @@
 module Conversion.Macro where
 
 import Control.Applicative ((<$>), (<*>), pure)
-import Control.Exception.Lifted (throwIO)
-import Control.Monad.Base (MonadBase)
+import Control.Monad.Error (throwError)
 import Control.Monad.State (MonadState (..))
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -15,9 +14,7 @@ import Types.Macro
 import Types.Syntax.After
 import Types.Util
 
-import Control.Monad.IO.Class (MonadIO (..))
-
-macro :: (MonadBase IO m, MonadIO m) => Expr -> SchemeT m Expr
+macro :: (Functor m, Monad m) => Expr -> SchemeT m Expr
 macro c@(Const _) = return c
 macro v@(Var _) = return v
 macro (Define var e) = Define var <$> macro e
@@ -26,7 +23,6 @@ macro (Lambda args e) = DefineMacro args <$> macro e
 macro (Func args e ref) = Func args <$> macro e <*> pure ref
 macro a@(Apply (Var v) es) = do
     m <- get
-    liftIO $ putStrLn $ show m
     maybe (return a) (conv es) $ M.lookup v m
 macro (Apply e es) = Apply <$> macro e <*> mapM macro es
 macro (CallCC cc args e) = CallCC <$> macro cc <*> pure args <*> macro e
@@ -38,7 +34,7 @@ macro (If b t f) = If <$> macro b <*> macro t <*> macro f
 macro Undefined = return Undefined
 macro (End e) = End <$> macro e
 
-conv :: MonadBase IO m => [Expr] -> MacroBody -> SchemeT m Expr
+conv :: Monad m => [Expr] -> MacroBody -> SchemeT m Expr
 conv args (MacroBody args' body) = do
     pairs <- argPairs args' args
     return $ mapExpr pairs body
@@ -60,12 +56,12 @@ mapExpr m (If b t f) = If (mapExpr m b) (mapExpr m t) (mapExpr m f)
 mapExpr _ Undefined = Undefined
 mapExpr m (End e) = End $ mapExpr m e
 
-argPairs :: MonadBase IO m => Args -> [Expr] -> m (Map Ident Expr)
+argPairs :: Monad m => Args -> [Expr] -> SchemeT m (Map Ident Expr)
 argPairs (Args (ProperList args)) exprs
     | length args == length exprs = return $ M.fromList $ zip args exprs
-    | otherwise = throwIO $ NumArgs "macro: not match number of args"
+    | otherwise = throwError $ NumArgs "macro: not match number of args"
 argPairs (Args (DottedList args arg)) exprs
-    | length args > length exprs = throwIO $ NumArgs "macro: not match number of args"
+    | length args > length exprs = throwError $ NumArgs "macro: not match number of args"
     | otherwise = do
         let (init', last') = splitAt (length args) exprs
             init'' = zip args init'

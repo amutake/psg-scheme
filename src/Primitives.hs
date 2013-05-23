@@ -2,53 +2,52 @@
 
 module Primitives where
 
-import Control.Exception.Lifted (throwIO)
 import Control.Monad (foldM)
-import Control.Monad.Base (MonadBase)
+import Control.Monad.Error (MonadError (..))
 
+import Types.Core
 import Types.Exception
 import Types.Syntax.After
 import Types.Util
 
-
-primAdd :: MonadBase IO m => [Expr] -> m Expr
+primAdd :: Monad m => [Expr] -> SchemeT m Expr
 primAdd = foldM add (Const $ Number 0)
   where
     add (Const (Number n)) (Const (Number m)) =
         return $ Const $ Number $ n + m
-    add _ _ = throwIO $ TypeMismatch "Number"
+    add _ _ = throwError $ TypeMismatch "Number"
 
-primSub :: MonadBase IO m => [Expr] -> m Expr
-primSub [] = throwIO $ NumArgs "at least one argument"
+primSub :: Monad m => [Expr] -> SchemeT m Expr
+primSub [] = throwError $ NumArgs "at least one argument"
 primSub (x:xs) = foldM sub x xs
   where
     sub (Const (Number n)) (Const (Number m)) =
         return $ Const $ Number $ n - m
-    sub _ _ = throwIO $ TypeMismatch "Number"
+    sub _ _ = throwError $ TypeMismatch "Number"
 
-primMul :: MonadBase IO m => [Expr] -> m Expr
+primMul :: Monad m => [Expr] -> SchemeT m Expr
 primMul = foldM mul (Const (Number 1))
   where
     mul (Const (Number n)) (Const (Number m)) =
         return $ Const $ Number $ n * m
-    mul _ _ = throwIO $ TypeMismatch "Number"
+    mul _ _ = throwError $ TypeMismatch "Number"
 
-primDiv :: MonadBase IO m => [Expr] -> m Expr
-primDiv [] = throwIO $ NumArgs "at least one argument"
+primDiv :: Monad m => [Expr] -> SchemeT m Expr
+primDiv [] = throwError $ NumArgs "at least one argument"
 primDiv ((Const (Number n)):[]) = return $ Const $ Number $ 1 `div` n
-primDiv (_:[]) = throwIO $ TypeMismatch "Number"
+primDiv (_:[]) = throwError $ TypeMismatch "Number"
 primDiv (x:xs) = foldM div' x xs
   where
     div' (Const (Number n)) (Const (Number m)) =
         return $ Const $ Number $ n `div` m
-    div' _ _ = throwIO $ TypeMismatch "Number"
+    div' _ _ = throwError $ TypeMismatch "Number"
 
-primEqual :: MonadBase IO m => [Expr] -> m Expr
-primEqual [] = throwIO $ NumArgs "at least two argument"
-primEqual (_:[]) = throwIO $ NumArgs "at least two argument"
+primEqual :: Monad m => [Expr] -> SchemeT m Expr
+primEqual [] = throwError $ NumArgs "at least two argument"
+primEqual (_:[]) = throwError $ NumArgs "at least two argument"
 primEqual (x:xs)
     | all isNumber (x:xs) = return $ Const $ Bool $ all (== x) xs
-    | otherwise = throwIO $ TypeMismatch "Number"
+    | otherwise = throwError $ TypeMismatch "Number"
   where
     isNumber (Const (Number _)) = True
     isNumber _ = False
