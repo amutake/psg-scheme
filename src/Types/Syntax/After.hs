@@ -3,14 +3,13 @@ module Types.Syntax.After where
 import Data.IORef.Lifted (IORef)
 import Data.Map (Map)
 
-import qualified Types.Syntax.Before as B
 import Types.Util
 
 data Expr
     = Const Const
     | Var Ident
     | Define Ident Expr
-    | DefineMacro Args B.Expr
+    | DefineMacro Args Expr
     | Lambda Args Expr
     | Func Args Expr EnvRef
     | Apply Expr [Expr]

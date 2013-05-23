@@ -3,12 +3,9 @@
 module Main where
 
 import Control.Exception.Lifted (try)
-#ifdef DEBUG
 import Control.Monad.IO.Class (MonadIO (..))
-#else
 import Control.Monad ((>=>))
-#endif
-import Control.Monad.State (runStateT)
+import Control.Monad.State (runStateT, StateT, evalStateT)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.IORef
 import Data.Map (empty)
@@ -26,36 +23,40 @@ import Types.Macro (Macro)
 import Types.Syntax.After (Expr, EnvRef)
 
 main :: IO ()
-main = newIORef initialEnv >>= repl empty
+main = do
+    ref <- newIORef initialEnv
+    evalStateT (repl ref) empty
+    return ()
 
 #ifdef DEBUG
 scheme :: (MonadBaseControl IO m, MonadIO m) => EnvRef -> String -> SchemeT m Expr
 scheme ref s = do
     be <- parse s
     liftIO $ putStrLn $ "parse: " ++ show be
-    me <- macro be
-    liftIO $ putStrLn $ "macro: " ++ show me
-    ae <- normalize me
+    ae <- normalize be
     liftIO $ putStrLn $ "normalize: " ++ show ae
+    me <- macro ae
+    liftIO $ putStrLn $ "macro: " ++ show me
     let ce = cps ae
     liftIO $ putStrLn $ "cps: " ++ show ce
     eval ref ce
 #else
 scheme :: MonadBaseControl IO m => EnvRef -> String -> SchemeT m Expr
-scheme ref = parse >=> macro >=> normalize >=> eval ref . cps
+scheme ref = parse >=> normalize >=> macro >=> eval ref . cps
 #endif
 
-repl :: Macro -> EnvRef -> IO ()
-repl mac env = do
-    putStr "scheme> "
-    hFlush stdout
-    str <- getLine
-    (result, mac') <- runStateT (runSchemeT (try $ scheme env str)) mac
+repl :: EnvRef -> StateT Macro IO ()
+repl env = do
+    liftIO $ putStr "scheme> "
+    liftIO $ hFlush stdout
+    str <- liftIO getLine
+    result <- runSchemeT (try $ scheme env str)
+    liftIO $ print result
     case result of
-        Left Exit -> putStrLn "bye."
+        Left Exit -> liftIO $ putStrLn "bye."
         Left (err :: SchemeException) -> do
-            print err
-            repl mac' env
+            liftIO $ print err
+            repl env
         Right val -> do
-            print val
-            repl mac' env
+            liftIO $ print val
+            repl env

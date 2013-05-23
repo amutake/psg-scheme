@@ -2,7 +2,7 @@
 
 module Conversion.Macro where
 
-import Control.Applicative ((<$>))
+import Control.Applicative ((<$>), (<*>), pure)
 import Control.Exception.Lifted (throwIO)
 import Control.Monad.Base (MonadBase)
 import Control.Monad.State (MonadState (..))
@@ -12,22 +12,31 @@ import qualified Data.Map as M
 import Types.Core
 import Types.Exception
 import Types.Macro
-import Types.Syntax.Before
+import Types.Syntax.After
 import Types.Util
 
-macro :: MonadBase IO m => Expr -> SchemeT m Expr
-macro c@(Const _) = return c
-macro (Ident i) = return $ Ident i
-macro (List l) = macroList l
+import Control.Monad.IO.Class (MonadIO (..))
 
-macroList :: MonadBase IO m => List Expr -> SchemeT m Expr
-macroList e@(ProperList ((Ident i):args)) = do
+macro :: (MonadBase IO m, MonadIO m) => Expr -> SchemeT m Expr
+macro c@(Const _) = return c
+macro v@(Var _) = return v
+macro (Define var e) = Define var <$> macro e
+macro (DefineMacro args e) = DefineMacro args <$> macro e
+macro (Lambda args e) = DefineMacro args <$> macro e
+macro (Func args e ref) = Func args <$> macro e <*> pure ref
+macro a@(Apply (Var v) es) = do
     m <- get
-    case M.lookup i m of
-        Just body -> conv args body
-        Nothing -> List <$> return e
-macroList e@(ProperList _) = List <$> return e
-macroList e@(DottedList _ _) = List <$> return e
+    liftIO $ putStrLn $ show m
+    maybe (return a) (conv es) $ M.lookup v m
+macro (Apply e es) = Apply <$> macro e <*> mapM macro es
+macro (CallCC cc args e) = CallCC <$> macro cc <*> pure args <*> macro e
+macro p@(Prim _) = return p
+macro (Quote e) = Quote <$> macro e
+macro (Begin es) = Begin <$> mapM macro es
+macro (Set var e) = Set var <$> macro e
+macro (If b t f) = If <$> macro b <*> macro t <*> macro f
+macro Undefined = return Undefined
+macro (End e) = End <$> macro e
 
 conv :: MonadBase IO m => [Expr] -> MacroBody -> SchemeT m Expr
 conv args (MacroBody args' body) = do
@@ -36,13 +45,20 @@ conv args (MacroBody args' body) = do
 
 mapExpr :: Map Ident Expr -> Expr -> Expr
 mapExpr _ (Const c) = Const c
-mapExpr m (Ident i) = case M.lookup i m of
-    Just e -> e
-    Nothing -> Ident i
-mapExpr m (List (ProperList es)) =
-    List $ ProperList $ map (mapExpr m) es
-mapExpr m (List (DottedList es e)) =
-    List $ DottedList (map (mapExpr m) es) $ mapExpr m e
+mapExpr m (Var var) = maybe (Var var) id $ M.lookup var m
+mapExpr m (Define var e) = Define var $ mapExpr m e
+mapExpr m (DefineMacro args e) = DefineMacro args $ mapExpr m e
+mapExpr m (Lambda args e) = Lambda args $ mapExpr m e
+mapExpr m (Func args e ref) = Func args (mapExpr m e) ref
+mapExpr m (Apply e es) = Apply (mapExpr m e) $ map (mapExpr m) es
+mapExpr m (CallCC cc args e) = CallCC cc args $ mapExpr m e
+mapExpr _ (Prim p) = Prim p
+mapExpr _ (Quote e) = Quote e
+mapExpr m (Begin es) = Begin $ map (mapExpr m) es
+mapExpr m (Set var e) = Set var $ mapExpr m e
+mapExpr m (If b t f) = If (mapExpr m b) (mapExpr m t) (mapExpr m f)
+mapExpr _ Undefined = Undefined
+mapExpr m (End e) = End $ mapExpr m e
 
 argPairs :: MonadBase IO m => Args -> [Expr] -> m (Map Ident Expr)
 argPairs (Args (ProperList args)) exprs
@@ -53,5 +69,7 @@ argPairs (Args (DottedList args arg)) exprs
     | otherwise = do
         let (init', last') = splitAt (length args) exprs
             init'' = zip args init'
-            last'' = [(arg, List $ ProperList last')]
+            last''
+                | null last' = [(arg, Const Nil)]
+                | otherwise = [(arg, Apply (head last') (tail last'))]
         return $ M.fromList $ init'' ++ last''

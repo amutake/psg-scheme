@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, CPP #-}
 
 module Eval where
 
@@ -15,14 +15,16 @@ import Types.Core
 import Types.Exception
 import Types.Macro
 import Types.Syntax.After
-import qualified Types.Syntax.Before as B
 import Types.Util
 
-eval :: MonadBase IO m => EnvRef -> Expr -> SchemeT m Expr
+
+import Control.Monad.IO.Class (MonadIO (..))
+
+eval :: (MonadBase IO m, MonadIO m) => EnvRef -> Expr -> SchemeT m Expr
 eval _ c@(Const _) = return c
 eval ref (Var v) = lookupEnv ref v >>= eval ref
 eval ref (Define v e) = eval ref e >>= define ref v
-eval _ (DefineMacro args expr) = putMacro args expr >> return Undefined
+eval ref (DefineMacro args expr) = eval ref expr >>= putMacro args
 eval ref (Lambda args body) = return $ Func args body ref
 eval _ f@(Func _ _ _) = return f
 eval ref (Apply f es) = do
@@ -44,7 +46,7 @@ eval ref (If b t f) = do
 eval _ Undefined = return Undefined
 eval ref (End e) = eval ref e >>= throwIO . Next
 
-apply :: MonadBase IO m => Expr -> [Expr] -> SchemeT m Expr
+apply :: (MonadBase IO m, MonadIO m) => Expr -> [Expr] -> SchemeT m Expr
 apply (Prim f) es = applyPrim f es
 apply (Func args body closure) es = do
     ref <- newIORef $ Extended empty closure
@@ -59,11 +61,18 @@ applyPrim Mul = primMul
 applyPrim Div = primDiv
 applyPrim Equal = primEqual
 
-putMacro :: MonadBase IO m => Args -> B.Expr -> SchemeT m ()
+putMacro :: (MonadBase IO m, MonadIO m) => Args -> Expr -> SchemeT m Expr
 putMacro args expr = do
     (var, args') <- splitArgs args
     macro <- get
     put $ M.insert var (MacroBody args' expr) macro
+#if DEBUG
+    liftIO $ putStrLn $ show args
+    liftIO $ putStrLn $ show expr
+    m' <- get
+    liftIO $ print m'
+#endif
+    return $ Var var
 
 splitArgs :: MonadBase IO m => Args -> m (Ident, Args)
 splitArgs (Args (ProperList [])) =
