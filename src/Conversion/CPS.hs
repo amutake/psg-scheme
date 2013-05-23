@@ -51,7 +51,7 @@ cpsExpr (CallCC _ args body) cc = do
     let (cc', n') = runState (cpsExpr cc $ Lambda (params [var]) (Var var)) $ n + 1
     put n'
     body' <- cpsExpr body cc
-    return $ Apply cc [CallCC cc' args body']
+    return $ CallCC cc' args body'
 cpsExpr p@(Prim _) _ = return p
 cpsExpr (Quote e) cc = return $ Apply cc [e]
 cpsExpr (Begin []) _ = return Undefined
@@ -68,8 +68,8 @@ cpsExpr (If b t f) cc = do
     e1 <- cpsExpr t cc
     e2 <- cpsExpr f cc
     cpsExpr b $ Lambda (params [var]) $ If (Var var) e1 e2
-cpsExpr Undefined _ = return Undefined
-cpsExpr End _ = return End
+cpsExpr Undefined cc = return $ Apply cc [Undefined]
+cpsExpr End cc = return $ Apply cc [End]
 
 getVar :: State Int Ident
 getVar = do
