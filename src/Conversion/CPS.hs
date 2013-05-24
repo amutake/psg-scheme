@@ -53,7 +53,7 @@ cpsExpr (CallCC _ args body) cc = do
     body' <- cpsExpr body cc
     return $ CallCC cc' args body'
 cpsExpr p@(Prim _) _ = return p
-cpsExpr (Quote e) cc = return $ Apply cc [e]
+cpsExpr (Quote e) cc = return $ Apply cc [Quote e]
 cpsExpr (Begin []) _ = return Undefined
 cpsExpr (Begin [e]) cc = cpsExpr e cc
 cpsExpr (Begin (e:es)) cc = do
