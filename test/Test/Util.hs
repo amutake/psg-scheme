@@ -2,9 +2,6 @@ module Test.Util where
 
 import Test.Hspec
 
-import Types.Syntax.After
-import Types.Util
-
 import Test.Core
 
 runUtilTests :: IO ()
@@ -16,6 +13,6 @@ loadTest = do
     describe "load" $ do
         it "works" $ do
             testScheme "(load \"lib/util.scm\") (list 1 2 3)" `shouldReturn`
-                [ Const $ Bool True
-                , Apply (Const $ Number 1) [Const $ Number 2, Const $ Number 3]
+                [ "#t"
+                , "(1 2 3)"
                 ]
