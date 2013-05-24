@@ -70,3 +70,10 @@ primCdr ((Dot (_:[]) x):[]) = return x
 primCdr ((Dot (_:xs) x):[]) = return $ Dot xs x
 primCdr (_:[]) = throwError $ TypeMismatch "Pair"
 primCdr _ = throwError $ NumArgs "cdr: args == 1"
+
+primCons :: Monad m => [Expr] -> SchemeT m Expr
+primCons (x:(Const Nil):[]) = return $ Apply x []
+primCons (x:(Apply y ys):[]) = return $ Apply x (y:ys)
+primCons (x:(Dot ys y):[]) = return $ Dot (x:ys) y
+primCons (x:y:[]) = return $ Dot [x] y
+primCons _ = throwError $ NumArgs "cons: args == 2"

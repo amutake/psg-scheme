@@ -102,6 +102,7 @@ applyPrim Equal = primEqual
 applyPrim Eqv = primEqv
 applyPrim Car = primCar
 applyPrim Cdr = primCdr
+applyPrim Cons = primCons
 
 load :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> Expr -> SchemeT m Expr
 load ref e = do
