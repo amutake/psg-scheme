@@ -18,7 +18,7 @@ primAdd = foldM add (Const $ Number 0)
     add _ _ = throwError $ TypeMismatch "Number"
 
 primSub :: Monad m => [Expr] -> SchemeT m Expr
-primSub [] = throwError $ NumArgs "at least one argument"
+primSub [] = throwError $ NumArgs "(-): 1 <= args"
 primSub (x:xs) = foldM sub x xs
   where
     sub (Const (Number n)) (Const (Number m)) =
@@ -33,7 +33,7 @@ primMul = foldM mul (Const (Number 1))
     mul _ _ = throwError $ TypeMismatch "Number"
 
 primDiv :: Monad m => [Expr] -> SchemeT m Expr
-primDiv [] = throwError $ NumArgs "at least one argument"
+primDiv [] = throwError $ NumArgs "(/): 1 <= args"
 primDiv ((Const (Number n)):[]) = return $ Const $ Number $ 1 `div` n
 primDiv (_:[]) = throwError $ TypeMismatch "Number"
 primDiv (x:xs) = foldM div' x xs
@@ -43,11 +43,16 @@ primDiv (x:xs) = foldM div' x xs
     div' _ _ = throwError $ TypeMismatch "Number"
 
 primEqual :: Monad m => [Expr] -> SchemeT m Expr
-primEqual [] = throwError $ NumArgs "at least two argument"
-primEqual (_:[]) = throwError $ NumArgs "at least two argument"
+primEqual [] = throwError $ NumArgs "(=): 2 <= args"
+primEqual (_:[]) = throwError $ NumArgs "(=): 2 <= args"
 primEqual (x:xs)
     | all isNumber (x:xs) = return $ Const $ Bool $ all (== x) xs
     | otherwise = throwError $ TypeMismatch "Number"
   where
     isNumber (Const (Number _)) = True
     isNumber _ = False
+
+primEqv :: Monad m => [Expr] -> SchemeT m Expr
+primEqv xs
+    | length xs == 2 = return $ Const $ Bool $ xs !! 0 == xs !! 1
+    | otherwise = throwError $ NumArgs "eqv?: args == 2"

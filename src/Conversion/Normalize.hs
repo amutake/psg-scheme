@@ -24,7 +24,7 @@ flattenList v = v
 
 normalizeExpr :: (Functor m, Monad m) => B.Expr -> SchemeT m A.Expr
 normalizeExpr (B.Const c) = return $ A.Const c
-normalizeExpr (B.Ident i) = return $ prim i
+normalizeExpr (B.Ident i) = return $ A.prim i
 normalizeExpr (B.List l) = normalizeList l
 
 normalizeList :: (Functor m, Monad m) => List B.Expr -> SchemeT m A.Expr
@@ -104,11 +104,3 @@ callCC e = do
     case e' of
         A.Lambda args body -> return $ A.CallCC A.Undefined args body
         _ -> throwError $ SyntaxError "call/cc"
-
-prim :: Ident -> A.Expr
-prim "+" = A.Prim A.Add
-prim "-" = A.Prim A.Sub
-prim "*" = A.Prim A.Mul
-prim "/" = A.Prim A.Div
-prim "=" = A.Prim A.Equal
-prim v = A.Var v

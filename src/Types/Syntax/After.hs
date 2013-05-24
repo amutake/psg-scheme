@@ -56,6 +56,7 @@ data Prim
     | Mul
     | Div
     | Equal
+    | Eqv
     deriving (Eq)
 
 instance Show Prim where
@@ -64,3 +65,13 @@ instance Show Prim where
     show Mul = "*"
     show Div = "/"
     show Equal = "="
+    show Eqv = "eqv?"
+
+prim :: Ident -> Expr
+prim "+" = Prim Add
+prim "-" = Prim Sub
+prim "*" = Prim Mul
+prim "/" = Prim Div
+prim "=" = Prim Equal
+prim "eqv?" = Prim Eqv
+prim v = Var v
