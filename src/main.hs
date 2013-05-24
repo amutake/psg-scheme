@@ -5,6 +5,7 @@ module Main where
 import Control.Monad.Error (runErrorT)
 import Control.Monad.State (runStateT)
 import Data.IORef (newIORef)
+import Data.List (intersperse)
 import Data.Map (empty)
 import System.IO (hFlush, stdout)
 
@@ -26,7 +27,8 @@ repl mac ref = do
     (results, mac') <- runStateT (runErrorT $ runSchemeT $ scheme ref str) mac
     case results of
         Left Exit -> putStrLn "Bye."
-        Left (err :: SchemeException) -> next err mac' ref
-        Right es -> next es mac' ref
+        Left (err :: SchemeException) -> next (show err) mac' ref
+        Right es -> next (newline es) mac' ref
   where
-    next e m r = print e >> repl m r
+    next e m r = putStrLn e >> repl m r
+    newline = concat . intersperse "\n" .  map show
