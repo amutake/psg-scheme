@@ -1,9 +1,10 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Util where
 
-import Control.Exception.Lifted (throwIO)
-import Control.Monad.Base (MonadBase)
-import Data.Traversable (Traversable, traverse)
-
 import Types.Util
+
+cons :: a -> List a -> List a
+cons x (ProperList xs) = ProperList (x:xs)
+cons x (DottedList xs x') = DottedList (x:xs) x'
+
+consArgs :: Ident -> Args -> Args
+consArgs var (Args list) = Args $ cons var list

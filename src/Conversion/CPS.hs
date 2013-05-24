@@ -5,6 +5,7 @@ import Control.Monad.State
 
 import Types.Syntax.After
 import Types.Util
+import Util
 
 cps :: Expr -> Expr
 cps e = evalState (cpsExpr e End) 1
@@ -23,10 +24,7 @@ cpsExpr (DefineMacro args e) cc = do
 cpsExpr (Lambda args e) cc = do
     var <- getVar
     e' <- cpsExpr e $ Var var
-    return $ Apply cc [Lambda (cons var args) e']
-  where
-    cons v (Args (ProperList vs)) = params $ v : vs
-    cons v (Args (DottedList vs v')) = Args $ DottedList (v : vs) v'
+    return $ Apply cc [Lambda (consArgs var args) e']
 cpsExpr f@(Func _ _ _) _ = return f
 cpsExpr (Apply p@(Prim _) args) cc = do
     vars <- getVars $ length args
