@@ -67,6 +67,7 @@ eval ref (Apply f es) = do
     case f' of
         End -> return $ last es'
         _ -> apply f' es'
+eval _ (Dot _ _) = throwError $ SyntaxError "dotted list"
 eval ref (CallCC cc args body) = do
     cc' <- eval ref cc
     defines ref args [cc']
@@ -99,6 +100,7 @@ applyPrim Mul = primMul
 applyPrim Div = primDiv
 applyPrim Equal = primEqual
 applyPrim Eqv = primEqv
+applyPrim Car = primCar
 
 load :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> Expr -> SchemeT m Expr
 load ref e = do
@@ -144,6 +146,7 @@ macro a@(Apply (Var v) es) = do
     m <- get
     maybe (return a) (conv es) $ M.lookup v m
 macro (Apply e es) = Apply <$> macro e <*> mapM macro es
+macro (Dot es e) = Dot <$> mapM macro es <*> macro e
 macro (CallCC cc args e) = CallCC <$> macro cc <*> pure args <*> macro e
 macro p@(Prim _) = return p
 macro (Quote e) = Quote <$> macro e

@@ -76,7 +76,8 @@ normalizeList (ProperList ((B.Ident "load"):_)) =
 normalizeList (ProperList (f:params)) =
     A.Apply <$> normalizeExpr f <*> mapM normalizeExpr params
 normalizeList (ProperList []) = return $ A.Const Nil
-normalizeList (DottedList _ _) = throwError $ SyntaxError "dotted list"
+normalizeList (DottedList es e) =
+    A.Dot <$> mapM normalizeExpr es <*> normalizeExpr e
 
 splitArgs :: (Functor m, Monad m) => List B.Expr -> SchemeT m (Ident, Args)
 splitArgs exprs = extractIdents exprs >>= split

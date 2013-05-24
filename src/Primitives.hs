@@ -56,3 +56,9 @@ primEqv :: Monad m => [Expr] -> SchemeT m Expr
 primEqv xs
     | length xs == 2 = return $ Const $ Bool $ xs !! 0 == xs !! 1
     | otherwise = throwError $ NumArgs "eqv?: args == 2"
+
+primCar :: Monad m => [Expr] -> SchemeT m Expr
+primCar ((Apply x _):[]) = return x
+primCar ((Dot (x:_) _):[]) = return $ x
+primCar (_:[]) = throwError $ TypeMismatch "pair"
+primCar _ = throwError $ NumArgs "car: args == 1"

@@ -45,6 +45,7 @@ cpsExpr (Apply f args) cc = do
     go c fvar vars ((var, arg):args') = do
         e <- go c fvar vars args'
         cpsExpr arg $ Lambda (params [var]) e
+cpsExpr (Dot es e) cc = return $ Apply cc [Dot es e]
 cpsExpr (CallCC _ args body) cc = do
     var <- getVar
     n <- get

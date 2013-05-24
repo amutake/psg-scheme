@@ -13,6 +13,7 @@ data Expr
     | Lambda Args Expr
     | Func Args Expr EnvRef
     | Apply Expr [Expr]
+    | Dot [Expr] Expr
     | CallCC CC Args Expr
     | Prim Prim
     | Quote Expr
@@ -34,6 +35,7 @@ instance Show Expr where
     show (Lambda args e) = "(lambda " ++ show args ++ " " ++ show e ++ ")"
     show (Func args e _) = "(function " ++ show args ++ " " ++ show e ++ ")"
     show (Apply e es) = "(" ++ unwords (map show $ e:es) ++ ")"
+    show (Dot es e) = "(" ++ unwords (map show es) ++ " . " ++ show e ++ ")"
     show (CallCC cc args body) = "((lambda " ++ show args ++ " " ++ show body ++ ") " ++ show cc ++ ")"
     show (Prim p) = show p
     show (Quote e) = "'" ++ show e
@@ -57,6 +59,7 @@ data Prim
     | Div
     | Equal
     | Eqv
+    | Car
     deriving (Eq)
 
 instance Show Prim where
@@ -66,6 +69,7 @@ instance Show Prim where
     show Div = "/"
     show Equal = "="
     show Eqv = "eqv?"
+    show Car = "car"
 
 prim :: Ident -> Expr
 prim "+" = Prim Add
@@ -74,4 +78,5 @@ prim "*" = Prim Mul
 prim "/" = Prim Div
 prim "=" = Prim Equal
 prim "eqv?" = Prim Eqv
+prim "car" = Prim Car
 prim v = Var v
