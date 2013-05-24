@@ -60,6 +60,7 @@ data Prim
     | Equal
     | Eqv
     | Car
+    | Cdr
     deriving (Eq)
 
 instance Show Prim where
@@ -70,6 +71,7 @@ instance Show Prim where
     show Equal = "="
     show Eqv = "eqv?"
     show Car = "car"
+    show Cdr = "cdr"
 
 prim :: Ident -> Expr
 prim "+" = Prim Add
@@ -79,4 +81,5 @@ prim "/" = Prim Div
 prim "=" = Prim Equal
 prim "eqv?" = Prim Eqv
 prim "car" = Prim Car
+prim "cdr" = Prim Cdr
 prim v = Var v

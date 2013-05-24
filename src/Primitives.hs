@@ -62,3 +62,11 @@ primCar ((Apply x _):[]) = return x
 primCar ((Dot (x:_) _):[]) = return $ x
 primCar (_:[]) = throwError $ TypeMismatch "pair"
 primCar _ = throwError $ NumArgs "car: args == 1"
+
+primCdr :: Monad m => [Expr] -> SchemeT m Expr
+primCdr ((Apply _ []):[]) = return $ Const Nil
+primCdr ((Apply _ (x:xs)):[]) = return $ Apply x xs
+primCdr ((Dot (_:[]) x):[]) = return x
+primCdr ((Dot (_:xs) x):[]) = return $ Dot xs x
+primCdr (_:[]) = throwError $ TypeMismatch "Pair"
+primCdr _ = throwError $ NumArgs "cdr: args == 1"
