@@ -21,7 +21,7 @@ parse str = case T.parseString parseExprs mempty str of
     Failure doc -> throwError $ ParseError doc
 
 parseExprs :: Parser [Expr]
-parseExprs = many parseExpr
+parseExprs = many parseExpr <* eof
 
 parseExpr :: Parser Expr
 parseExpr = between blank blank $
