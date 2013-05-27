@@ -17,10 +17,10 @@ cpsExpr (Define v e) cc = do
     var <- getVar
     e' <- cpsExpr e $ Lambda (params [var]) $ Var var
     return $ Apply cc [Define v e']
-cpsExpr (DefineMacro args e) cc = do
+cpsExpr (DefineMacro v e) cc = do
     var <- getVar
     e' <- cpsExpr e $ Lambda (params [var]) $ Var var
-    return $ Apply cc [DefineMacro args e']
+    return $ Apply cc [DefineMacro v e']
 cpsExpr (Lambda args e) cc = do
     var <- getVar
     e' <- cpsExpr e $ Var var

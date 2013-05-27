@@ -35,9 +35,11 @@ normalizeList (ProperList ((B.Ident "define"):(B.List vars):body)) = do
     A.Define var <$> lambdaBody args body
 normalizeList (ProperList ((B.Ident "define"):_)) =
     throwError $ SyntaxError "define"
-normalizeList (ProperList ((B.Ident "define-macro"):(B.List vars):[body])) = do
-    args <- Args <$> extractIdents vars
-    A.DefineMacro args <$> normalizeExpr body
+normalizeList (ProperList ((B.Ident "define-macro"):(B.Ident var):[expr])) =
+    A.DefineMacro var <$> normalizeExpr expr
+normalizeList (ProperList ((B.Ident "define-macro"):(B.List vars):body)) = do
+    (var, args) <- splitArgs vars
+    A.DefineMacro var <$> lambdaBody args body
 normalizeList (ProperList ((B.Ident "lambda"):(B.Ident args):body)) = do
     let args' = Args $ DottedList [] args
     lambdaBody args' body

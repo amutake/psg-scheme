@@ -54,7 +54,7 @@ eval :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> Expr -> Sch
 eval _ c@(Const _) = return c
 eval ref (Var v) = lookupEnv ref v
 eval ref (Define v e) = eval ref e >>= define ref v
-eval ref (DefineMacro args expr) = putMacro args expr ref
+eval ref (DefineMacro v e) = eval ref e >>= putMacro v
 eval ref (Lambda args body) = return $ Func args body ref
 eval _ f@(Func _ _ _) = return f
 eval ref (Apply f es) = do
@@ -117,21 +117,12 @@ extractString :: Monad m => Expr -> SchemeT m String
 extractString (Const (String str)) = return str
 extractString _ = throwError $ TypeMismatch "String"
 
-putMacro :: MonadBase IO m => Args -> Expr -> EnvRef -> SchemeT m Expr
-putMacro args expr ref = do
-    (var, args') <- splitArgs args
+putMacro :: MonadBase IO m => Ident -> Expr -> SchemeT m Expr
+putMacro var (Func args expr ref) = do
     mac <- get
-    put $ M.insert var (MacroBody args' expr ref) mac
+    put $ M.insert var (MacroBody args expr ref) mac
     return $ Var var
-
-splitArgs :: MonadBase IO m => Args -> SchemeT m (Ident, Args)
-splitArgs (Args (ProperList [])) =
-    throwError $ SyntaxError "define-macro: not find identifier"
-splitArgs (Args (ProperList (e:es))) = return (e, Args $ ProperList es)
-splitArgs (Args (DottedList [] _)) =
-    throwError $ SyntaxError "define-macro: not find identifier"
-splitArgs (Args (DottedList (e:es) r)) =
-    return (e, Args $ DottedList es r)
+putMacro _ _ = throwError $ SyntaxError "define-macro"
 
 ----------------
 -- macro
@@ -141,7 +132,7 @@ macro :: (MonadIO m, MonadBase IO m) => Expr -> SchemeT m Expr
 macro c@(Const _) = return c
 macro v@(Var _) = return v
 macro (Define var e) = Define var <$> macro e
-macro (DefineMacro args e) = DefineMacro args <$> macro e
+macro (DefineMacro v e) = DefineMacro v <$> macro e
 macro (Lambda args e) = Lambda args <$> macro e
 macro (Func args e ref) = Func args <$> macro e <*> pure ref
 macro a@(Apply (Var v) es) = do
@@ -162,5 +153,5 @@ macro End = return End
 conv :: (MonadIO m, MonadBase IO m) => [Expr] -> MacroBody -> SchemeT m Expr
 conv args (MacroBody args' body ref) = do
     ref' <- newIORef $ Extended empty ref
-    defines ref' args' args
+    defines ref' args' $ End : args
     eval ref' body
