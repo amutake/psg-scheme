@@ -53,6 +53,7 @@ cpsExpr (CallCC _ args body) cc = do
     return $ CallCC cc' args body'
 cpsExpr p@(Prim _) _ = return p
 cpsExpr (Quote e) cc = return $ Apply cc [Quote e]
+cpsExpr (QuasiQuote e) cc = return $ Apply cc [QuasiQuote e]
 cpsExpr (Begin []) _ = return Undefined
 cpsExpr (Begin [e]) cc = cpsExpr e cc
 cpsExpr (Begin (e:es)) cc = do

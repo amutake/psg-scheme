@@ -52,6 +52,10 @@ normalizeList (ProperList ((B.Ident "quote"):[e])) =
     A.Quote <$> normalizeExpr e
 normalizeList (ProperList ((B.Ident "quote"):_)) =
     throwError $ SyntaxError "quote"
+normalizeList (ProperList ((B.Ident "quasiquote"):[e])) =
+    A.QuasiQuote <$> normalizeExpr e
+normalizeList (ProperList ((B.Ident "quasiquote"):_)) =
+    throwError $ SyntaxError "quasiquote"
 normalizeList (ProperList ((B.Ident "begin"):[])) = return A.Undefined
 normalizeList (ProperList ((B.Ident "begin"):[e])) = normalizeExpr e
 normalizeList (ProperList ((B.Ident "begin"):es)) =

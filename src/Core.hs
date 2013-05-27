@@ -74,6 +74,7 @@ eval ref (CallCC cc args body) = do
     eval ref body
 eval _ p@(Prim _) = return p
 eval _ (Quote e) = return e
+eval ref (QuasiQuote e) = evalQuasiQuote ref e
 eval ref (Begin es) = mapM (eval ref) (init es) >> eval ref (last es)
 eval ref (Set v e) = eval ref e >>= setVar ref v
 eval ref (If b t f) = do
@@ -84,6 +85,9 @@ eval ref (If b t f) = do
 eval ref (Load e) = eval ref e >>= load ref
 eval _ Undefined = return Undefined
 eval _ End = return End
+
+evalQuasiQuote :: Monad m => EnvRef -> Expr -> SchemeT m Expr
+evalQuasiQuote _ e = return e
 
 apply :: (MonadBase IO m, MonadIO m) => Expr -> [Expr] -> SchemeT m Expr
 apply (Prim f) es = applyPrim f es
@@ -143,6 +147,7 @@ macro (Dot es e) = Dot <$> mapM macro es <*> macro e
 macro (CallCC cc args e) = CallCC <$> macro cc <*> pure args <*> macro e
 macro p@(Prim _) = return p
 macro (Quote e) = Quote <$> macro e
+macro (QuasiQuote e) = QuasiQuote <$> macro e
 macro (Begin es) = Begin <$> mapM macro es
 macro (Set var e) = Set var <$> macro e
 macro (If b t f) = If <$> macro b <*> macro t <*> macro f

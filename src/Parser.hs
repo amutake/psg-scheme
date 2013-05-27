@@ -28,6 +28,7 @@ parseExpr = between blank blank $
     parseConst <|>
     parseList <|>
     parseQuote <|>
+    parseQuasiQuote <|>
     parseIdent
 
 parseConst :: Parser Expr
@@ -60,6 +61,12 @@ parseDottedList = try . parens $ DottedList <$>
 parseQuote :: Parser Expr
 parseQuote = List . ProperList <$>
     (two <$> (symbol "'" $> Ident "quote") <*> parseExpr)
+  where
+    two x y = [x, y]
+
+parseQuasiQuote :: Parser Expr
+parseQuasiQuote = List . ProperList <$>
+    (two <$> (symbol "`" $> Ident "quasiquote") <*> parseExpr)
   where
     two x y = [x, y]
 
