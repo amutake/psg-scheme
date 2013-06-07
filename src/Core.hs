@@ -75,6 +75,8 @@ eval ref (CallCC cc args body) = do
 eval _ p@(Prim _) = return p
 eval _ (Quote e) = return e
 eval ref (QuasiQuote e) = evalQuasiQuote ref e
+eval ref (Unquote e) = eval ref e
+eval ref (UnquoteSplicing e) = eval ref e
 eval ref (Begin es) = mapM (eval ref) (init es) >> eval ref (last es)
 eval ref (Set v e) = eval ref e >>= setVar ref v
 eval ref (If b t f) = do
@@ -86,8 +88,41 @@ eval ref (Load e) = eval ref e >>= load ref
 eval _ Undefined = return Undefined
 eval _ End = return End
 
-evalQuasiQuote :: Monad m => EnvRef -> Expr -> SchemeT m Expr
-evalQuasiQuote _ e = return e
+evalQuasiQuote :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> Expr -> SchemeT m Expr
+evalQuasiQuote _ c@(Const _) = return c
+evalQuasiQuote _ v@(Var _) = return v
+evalQuasiQuote ref (Define v e) = Define v <$> evalQuasiQuote ref e
+evalQuasiQuote ref (DefineMacro v e) = DefineMacro v <$> evalQuasiQuote ref e
+evalQuasiQuote ref (Lambda args body) = Lambda args <$> evalQuasiQuote ref body
+evalQuasiQuote _ f@(Func _ _ _) = return f
+evalQuasiQuote ref (Apply f es) = case f of
+    UnquoteSplicing e -> do
+        e' <- eval ref e
+        case e' of
+            Apply f' es' -> Apply f' <$> ((es' ++) <$> go ref es)
+            _ -> throwError $ SyntaxError ",@expr must be evaluated to list"
+    _ -> Apply <$> evalQuasiQuote ref f <*> go ref es
+  where
+    go _ [] = return []
+    go gref ((UnquoteSplicing ge):ges) = do
+        ge' <- eval gref ge
+        case ge' of
+            Apply gf' ges' -> ((gf' : ges') ++) <$> go gref ges
+            _ -> (ge' :) <$> go gref ges
+    go gref (ge:ges) = (:) <$> evalQuasiQuote gref ge <*> go gref ges
+evalQuasiQuote _ d@(Dot _ _) = return d
+evalQuasiQuote ref (CallCC cc args body) = CallCC <$> evalQuasiQuote ref cc <*> pure args <*> evalQuasiQuote ref body
+evalQuasiQuote _ p@(Prim _) = return p
+evalQuasiQuote _ q@(Quote _) = return q
+evalQuasiQuote ref (QuasiQuote e) = evalQuasiQuote ref e
+evalQuasiQuote ref (Unquote e) = eval ref e
+evalQuasiQuote _ (UnquoteSplicing _) = throwError $ SyntaxError "this is bug! evalQuasiQuote"
+evalQuasiQuote ref (Begin es) = Begin <$> mapM (evalQuasiQuote ref) es
+evalQuasiQuote ref (Set v e) = Set v <$> evalQuasiQuote ref e
+evalQuasiQuote ref (If b t f) = If <$> evalQuasiQuote ref b <*> evalQuasiQuote ref t <*> evalQuasiQuote ref f
+evalQuasiQuote ref (Load e) = Load <$> evalQuasiQuote ref e
+evalQuasiQuote _ Undefined = return Undefined
+evalQuasiQuote _ End = return End
 
 apply :: (MonadBase IO m, MonadIO m) => Expr -> [Expr] -> SchemeT m Expr
 apply (Prim f) es = applyPrim f es
@@ -148,6 +183,8 @@ macro (CallCC cc args e) = CallCC <$> macro cc <*> pure args <*> macro e
 macro p@(Prim _) = return p
 macro (Quote e) = Quote <$> macro e
 macro (QuasiQuote e) = QuasiQuote <$> macro e
+macro (Unquote e) = Unquote <$> macro e
+macro (UnquoteSplicing e) = UnquoteSplicing <$> macro e
 macro (Begin es) = Begin <$> mapM macro es
 macro (Set var e) = Set var <$> macro e
 macro (If b t f) = If <$> macro b <*> macro t <*> macro f

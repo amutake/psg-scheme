@@ -18,6 +18,8 @@ data Expr
     | Prim Prim
     | Quote Expr
     | QuasiQuote Expr
+    | Unquote Expr
+    | UnquoteSplicing Expr
     | Begin [Expr]
     | Set Ident Expr
     | If Expr Expr Expr
@@ -41,6 +43,8 @@ instance Show Expr where
     show (Prim p) = show p
     show (Quote e) = "'" ++ show e
     show (QuasiQuote e) = "`" ++ show e
+    show (Unquote e) = "," ++ show e
+    show (UnquoteSplicing e) = ",@" ++ show e
     show (Begin es) = "(begin " ++ unwords (map show es) ++ ")"
     show (Set v e) = "(set! " ++ v ++ " " ++ show e ++ ")"
     show (If b t f) = "(if " ++ show b ++ " " ++ show t ++ " " ++ show f ++ ")"

@@ -56,6 +56,14 @@ normalizeList (ProperList ((B.Ident "quasiquote"):[e])) =
     A.QuasiQuote <$> normalizeExpr e
 normalizeList (ProperList ((B.Ident "quasiquote"):_)) =
     throwError $ SyntaxError "quasiquote"
+normalizeList (ProperList ((B.Ident "unquote"):[e])) =
+    A.Unquote <$> normalizeExpr e
+normalizeList (ProperList ((B.Ident "unquote"):_)) =
+    throwError $ SyntaxError "unquote"
+normalizeList (ProperList ((B.Ident "unquote-splicing"):[e])) =
+    A.UnquoteSplicing <$> normalizeExpr e
+normalizeList (ProperList ((B.Ident "unquote-splicing"):_)) =
+    throwError $ SyntaxError "unquote-splicing"
 normalizeList (ProperList ((B.Ident "begin"):[])) = return A.Undefined
 normalizeList (ProperList ((B.Ident "begin"):[e])) = normalizeExpr e
 normalizeList (ProperList ((B.Ident "begin"):es)) =
