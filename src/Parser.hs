@@ -34,7 +34,7 @@ parseExpr = between blank blank $
     parseIdent
 
 parseConst :: Parser Expr
-parseConst = Const <$> (parseBool <|> parseNumber <|> parseString)
+parseConst = Const <$> (parseBool <|> parseNumber <|> parseString <|> parseUndefined)
 
 parseBool :: Parser Const
 parseBool = parseTrue <|> parseFalse
@@ -48,6 +48,9 @@ parseNumber = try . token $ Number <$>
 
 parseString :: Parser Const
 parseString = try $ String <$> stringLiteral
+
+parseUndefined :: Parser Const
+parseUndefined = try $ symbol "undefined" $> Undefined
 
 parseList :: Parser Expr
 parseList = List <$> (parseProperList <|> parseDottedList)
