@@ -8,6 +8,7 @@ import Control.Monad.Error (MonadError (..))
 import Types.Core
 import Types.Exception
 import Types.Syntax
+import Util
 
 primAdd :: Monad m => [Expr] -> SchemeT m Expr
 primAdd = foldM add (Const $ Number 0)
@@ -57,22 +58,22 @@ primEqv xs
     | otherwise = throwError $ NumArgs "eqv?: args == 2"
 
 primCar :: Monad m => [Expr] -> SchemeT m Expr
-primCar ((Apply x _):[]) = return x
-primCar ((Dot (x:_) _):[]) = return $ x
-primCar (_:[]) = throwError $ TypeMismatch "pair"
+primCar [List (ProperList (x : _))] = return x
+primCar [List (DottedList (x : _) _)] = return $ x
+primCar [_] = throwError $ TypeMismatch "pair"
 primCar _ = throwError $ NumArgs "car: args == 1"
 
 primCdr :: Monad m => [Expr] -> SchemeT m Expr
-primCdr ((Apply _ []):[]) = return $ Const Nil
-primCdr ((Apply _ (x:xs)):[]) = return $ Apply x xs
-primCdr ((Dot (_:[]) x):[]) = return x
-primCdr ((Dot (_:xs) x):[]) = return $ Dot xs x
-primCdr (_:[]) = throwError $ TypeMismatch "Pair"
+primCdr [List (ProperList [])] = return nil
+primCdr [List (ProperList (_ : xs))] = return $ List $ ProperList xs
+primCdr [List (DottedList [_] x)] = return x
+primCdr [List (DottedList (_ : xs) x)] = return $ List $ DottedList xs x
+primCdr [_] = throwError $ TypeMismatch "Pair"
 primCdr _ = throwError $ NumArgs "cdr: args == 1"
 
 primCons :: Monad m => [Expr] -> SchemeT m Expr
-primCons (x:(Const Nil):[]) = return $ Apply x []
-primCons (x:(Apply y ys):[]) = return $ Apply x (y:ys)
-primCons (x:(Dot ys y):[]) = return $ Dot (x:ys) y
-primCons (x:y:[]) = return $ Dot [x] y
+primCons [x, List (ProperList [])] = return $ List $ cons x nil
+primCons [x, List (ProperList ys)) = return $ List $ cons x $ ProperList ys
+primCons [x, List (DottedList ys y)] = return $ List $ DottedList (x : ys) y
+primCons [x, y] = return $ List $ DottedList [x] y
 primCons _ = throwError $ NumArgs "cons: args == 2"
