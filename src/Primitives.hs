@@ -64,7 +64,7 @@ primCar [_] = throwError $ TypeMismatch "pair"
 primCar _ = throwError $ NumArgs "car: args == 1"
 
 primCdr :: Monad m => [Expr] -> SchemeT m Expr
-primCdr [List (ProperList [])] = return nil
+primCdr [List (ProperList [])] = return $ List nil
 primCdr [List (ProperList (_ : xs))] = return $ List $ ProperList xs
 primCdr [List (DottedList [_] x)] = return x
 primCdr [List (DottedList (_ : xs) x)] = return $ List $ DottedList xs x
@@ -73,7 +73,7 @@ primCdr _ = throwError $ NumArgs "cdr: args == 1"
 
 primCons :: Monad m => [Expr] -> SchemeT m Expr
 primCons [x, List (ProperList [])] = return $ List $ cons x nil
-primCons [x, List (ProperList ys)) = return $ List $ cons x $ ProperList ys
+primCons [x, List (ProperList ys)] = return $ List $ cons x $ ProperList ys
 primCons [x, List (DottedList ys y)] = return $ List $ DottedList (x : ys) y
 primCons [x, y] = return $ List $ DottedList [x] y
 primCons _ = throwError $ NumArgs "cons: args == 2"

@@ -1,8 +1,7 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, ConstraintKinds #-}
 
 module Env where
 
-import Control.Monad.Base (MonadBase)
 import Control.Monad.Error (throwError)
 import Data.IORef.Lifted (readIORef, modifyIORef)
 import qualified Data.Map as Map
@@ -34,9 +33,7 @@ defines ref (DottedList args arg) exprs
     | otherwise = do
         let (init', last') = splitAt (length args) exprs
         modifyIORef ref $ union $ Map.fromList $ zip args init'
-        case last' of
-            [] -> modifyIORef ref $ insert arg $ List $ ProperList []
-            x:xs -> modifyIORef ref $ insert arg $ Apply x xs
+        modifyIORef ref $ insert arg $ List $ ProperList last'
 
 insert :: Ident -> Expr -> Env -> Env
 insert var expr (Global m) = Global $ Map.insert var expr m
