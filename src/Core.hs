@@ -1,8 +1,8 @@
-{-# LANGUAGE FlexibleContexts, CPP #-}
+{-# LANGUAGE FlexibleContexts, CPP, ConstraintKinds #-}
 
 module Core where
 
-import Control.Applicative ((<$>), (<*>), pure)
+import Control.Applicative ((<$>), (<*>))
 import Control.Exception (try)
 #ifdef DEBUG
 #else
@@ -21,12 +21,13 @@ import Primitives
 import Conversion.Normalize (normalize)
 import Conversion.CPS (cps)
 import Parser (parse)
-import Types.Core (SchemeT (..))
+import Types.Core
 import Types.Exception
 import Types.Syntax
+import Util
 
 #ifdef DEBUG
-scheme :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> String -> SchemeT m [Expr]
+scheme :: MonadScheme m => EnvRef -> String -> SchemeT m [Expr]
 scheme ref s = do
     bes <- parse s
     liftIO $ putStrLn $ "parse: " ++ show bes
@@ -40,7 +41,7 @@ scheme ref s = do
         eval ref ce
         ) bes
 #else
-scheme :: (Functor m, Monad m, MonadBase IO m, MonadIO m) => EnvRef -> String -> SchemeT m [Expr]
+scheme :: MonadScheme m => EnvRef -> String -> SchemeT m [Expr]
 scheme ref = parse >=> mapM (normalize >=> macro >=> eval ref . cps)
 #endif
 
@@ -48,83 +49,68 @@ scheme ref = parse >=> mapM (normalize >=> macro >=> eval ref . cps)
 -- eval
 ----------------
 
-eval :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> Expr -> SchemeT m Expr
+eval :: MonadScheme m => EnvRef -> Expr -> SchemeT m Expr
 eval _ c@(Const _) = return c
-eval ref (Var v) = lookupEnv ref v
-eval ref (Define v e) = eval ref e >>= define ref v
-eval ref (DefineMacro v e) = eval ref e >>= putMacro v
-eval ref (Lambda args body) = return $ Func args body ref
-eval _ f@(Func _ _ _) = return f
-eval ref (Apply f es) = do
-    f' <- eval ref f
-    es' <- mapM (eval ref) es
-#ifdef DEBUG
-    liftIO $ putStrLn $ ("  apply-before: " ++) $ show $ Apply f es
-    liftIO $ putStrLn $ ("  apply-after: " ++) $ show $ Apply f' es'
-#endif
-    case f' of
-        End -> return $ last es'
-        _ -> apply f' es'
-eval _ (Dot _ _) = throwError $ SyntaxError "dotted list"
-eval ref (CallCC cc args body) = do
-    cc' <- eval ref cc
-    defines ref args [cc']
-    eval ref body
-eval _ p@(Prim _) = return p
-eval _ (Quote e) = return e
-eval ref (QuasiQuote e) = evalQuasiQuote ref e
-eval ref (Unquote e) = eval ref e
-eval ref (UnquoteSplicing e) = eval ref e
-eval ref (Begin es) = mapM (eval ref) (init es) >> eval ref (last es)
-eval ref (Set v e) = eval ref e >>= setVar ref v
-eval ref (If b t f) = do
+eval ref (Ident i) = lookupEnv ref i
+eval ref (List (ProperList es)) = evalList ref es
+eval _ (List (DottedList _ _)) = throwError $ SyntaxError "dotted list"
+eval _ n@(Normalized _) = return n
+eval _ e@(Evaled _) = return e
+
+evalList :: MonadScheme m => EnvRef -> [Expr] -> SchemeT m Expr
+evalList ref [Ident "define", Ident v, e] = eval ref e >>= define ref v
+evalList ref [Ident "define-macro", Ident v, e] = eval ref e >>= putMacro v
+evalList ref [Ident "lambda", List args, body] = do
+    args' <- extractIdents args
+    return $ Evaled $ Func args' body ref
+evalList _ [Ident "quote", e] = return e
+evalList ref [Ident "quasiquote", e] = evalQuasiQuote ref e
+evalList ref [Ident "unquote", e] = eval ref e
+evalList ref [Ident "unquote-splicing", e] = eval ref e
+evalList ref ((Ident "begin") : es) = mapM (eval ref) (init es) >> eval ref (last es)
+evalList ref [Ident "set!", Ident v, e] = eval ref e >>= setVar ref v
+evalList ref [Ident "if", b, t, f] = do
     b' <- eval ref b
     case b' of
         Const (Bool True) -> eval ref t
         _ -> eval ref f
-eval ref (Load e) = eval ref e >>= load ref
-eval _ Undefined = return Undefined
-eval _ End = return End
+evalList ref (f : es) = do
+    f' <- eval ref f
+    es' <- mapM (eval ref) es
+#ifdef DEBUG
+    liftIO $ putStrLn $ ("  apply-before: " ++) $ show $ List $ ProperList (f : es)
+    liftIO $ putStrLn $ ("  apply-after: " ++) $ show $ List $ ProperList (f' : es')
+#endif
+    case f' of
+        Evaled Return -> return $ last es'
+        _ -> apply f' es'
+evalList _ [] = return $ List nil
 
-evalQuasiQuote :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> Expr -> SchemeT m Expr
+evalQuasiQuote :: MonadScheme m => EnvRef -> Expr -> SchemeT m Expr
 evalQuasiQuote _ c@(Const _) = return c
-evalQuasiQuote _ v@(Var _) = return v
-evalQuasiQuote ref (Define v e) = Define v <$> evalQuasiQuote ref e
-evalQuasiQuote ref (DefineMacro v e) = DefineMacro v <$> evalQuasiQuote ref e
-evalQuasiQuote ref (Lambda args body) = Lambda args <$> evalQuasiQuote ref body
-evalQuasiQuote _ f@(Func _ _ _) = return f
-evalQuasiQuote ref (Apply f es) = case f of
-    UnquoteSplicing e -> do
-        e' <- eval ref e
-        case e' of
-            Apply f' es' -> Apply f' <$> ((es' ++) <$> go ref es)
-            _ -> throwError $ SyntaxError ",@expr must be evaluated to list"
-    _ -> Apply <$> evalQuasiQuote ref f <*> go ref es
+evalQuasiQuote _ i@(Ident _) = return i
+evalQuasiQuote ref (List (ProperList es)) = evalListQuasiQuote ref es
+evalQuasiQuote _ d@(List (DottedList _ _)) = return d
+evalQuasiQuote _ n@(Normalized _) = return n
+evalQuasiQuote _ e@(Evaled _) = return e
+
+evalListQuasiQuote :: MonadScheme m => EnvRef -> [Expr] -> SchemeT m Expr
+evalListQuasiQuote _ [Ident "quote", e] = return $ List $ ProperList [Ident "quote", e]
+evalListQuasiQuote ref [Ident "unquote", e] = eval ref e
+evalListQuasiQuote _ [] = return $ List nil
+evalListQuasiQuote ref es = List . ProperList <$> go ref es
   where
     go _ [] = return []
-    go gref ((UnquoteSplicing ge):ges) = do
-        ge' <- eval gref ge
-        case ge' of
-            Apply gf' ges' -> ((gf' : ges') ++) <$> go gref ges
-            _ -> (ge' :) <$> go gref ges
-    go gref (ge:ges) = (:) <$> evalQuasiQuote gref ge <*> go gref ges
-evalQuasiQuote _ d@(Dot _ _) = return d
-evalQuasiQuote ref (CallCC cc args body) = CallCC <$> evalQuasiQuote ref cc <*> pure args <*> evalQuasiQuote ref body
-evalQuasiQuote _ p@(Prim _) = return p
-evalQuasiQuote _ q@(Quote _) = return q
-evalQuasiQuote ref (QuasiQuote e) = evalQuasiQuote ref e
-evalQuasiQuote ref (Unquote e) = eval ref e
-evalQuasiQuote _ (UnquoteSplicing _) = throwError $ SyntaxError "this is bug! evalQuasiQuote"
-evalQuasiQuote ref (Begin es) = Begin <$> mapM (evalQuasiQuote ref) es
-evalQuasiQuote ref (Set v e) = Set v <$> evalQuasiQuote ref e
-evalQuasiQuote ref (If b t f) = If <$> evalQuasiQuote ref b <*> evalQuasiQuote ref t <*> evalQuasiQuote ref f
-evalQuasiQuote ref (Load e) = Load <$> evalQuasiQuote ref e
-evalQuasiQuote _ Undefined = return Undefined
-evalQuasiQuote _ End = return End
+    go ref' ((List (ProperList [Ident "unquote-splicing", e])) : es') = do
+        e' <- eval ref' e
+        case e' of
+            List (ProperList es'') -> (es'' ++) <$> go ref' es'
+            _ -> throwError $ SyntaxError ",@expr must be evaluated to list"
+    go ref' (e : es') = (:) <$> evalQuasiQuote ref' e <*> go ref' es'
 
-apply :: (MonadBase IO m, MonadIO m) => Expr -> [Expr] -> SchemeT m Expr
-apply (Prim f) es = applyPrim f es
-apply (Func args body closure) es = do
+apply :: MonadScheme m => Expr -> [Expr] -> SchemeT m Expr
+apply (Normalized (Prim f)) es = applyPrim f es
+apply (Evaled (Func args body closure)) es = do
     ref <- newIORef $ Extended empty closure
     defines ref args es
     eval ref body
@@ -141,7 +127,7 @@ applyPrim Car = primCar
 applyPrim Cdr = primCdr
 applyPrim Cons = primCons
 
-load :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> Expr -> SchemeT m Expr
+load :: MonadScheme m => EnvRef -> Expr -> SchemeT m Expr
 load ref e = do
     path <- extractString e
     result <- liftIO $ try $ readFile path
@@ -155,43 +141,33 @@ extractString (Const (String str)) = return str
 extractString _ = throwError $ TypeMismatch "String"
 
 putMacro :: MonadBase IO m => Ident -> Expr -> SchemeT m Expr
-putMacro var (Func args expr ref) = do
+putMacro var (Evaled (Func args expr ref)) = do
     mac <- get
     put $ M.insert var (MacroBody args expr ref) mac
-    return $ Var var
+    return $ Ident var
 putMacro _ _ = throwError $ SyntaxError "define-macro"
 
 ----------------
--- macro
+-- macro-expansion
 ----------------
 
-macro :: (MonadIO m, MonadBase IO m) => Expr -> SchemeT m Expr
+macro :: MonadScheme m => Expr -> SchemeT m Expr
 macro c@(Const _) = return c
-macro v@(Var _) = return v
-macro (Define var e) = Define var <$> macro e
-macro (DefineMacro v e) = DefineMacro v <$> macro e
-macro (Lambda args e) = Lambda args <$> macro e
-macro (Func args e ref) = Func args <$> macro e <*> pure ref
-macro a@(Apply (Var v) es) = do
-    m <- get
-    maybe (return a) (conv es) $ M.lookup v m
-macro (Apply e es) = Apply <$> macro e <*> mapM macro es
-macro (Dot es e) = Dot <$> mapM macro es <*> macro e
-macro (CallCC cc args e) = CallCC <$> macro cc <*> pure args <*> macro e
-macro p@(Prim _) = return p
-macro (Quote e) = Quote <$> macro e
-macro (QuasiQuote e) = QuasiQuote <$> macro e
-macro (Unquote e) = Unquote <$> macro e
-macro (UnquoteSplicing e) = UnquoteSplicing <$> macro e
-macro (Begin es) = Begin <$> mapM macro es
-macro (Set var e) = Set var <$> macro e
-macro (If b t f) = If <$> macro b <*> macro t <*> macro f
-macro (Load e) = Load <$> macro e
-macro Undefined = return Undefined
-macro End = return End
+macro i@(Ident _) = return i
+macro (List (ProperList es)) = macroList es
+macro (List (DottedList es e)) = List <$> (DottedList <$> mapM macro es <*> macro e)
+macro n@(Normalized _) = return n
+macro e@(Evaled _) = return e
 
-conv :: (MonadIO m, MonadBase IO m) => [Expr] -> MacroBody -> SchemeT m Expr
+macroList :: MonadScheme m => [Expr] -> SchemeT m Expr
+macroList [] = return $ List nil
+macroList ((Ident v) : es) = do
+    m <- get
+    maybe (List . ProperList <$> (Ident v :) <$> mapM macro es) (conv es) $ M.lookup v m
+macroList es = List . ProperList <$> mapM macro es
+
+conv :: MonadScheme m => [Expr] -> MacroBody -> SchemeT m Expr
 conv args (MacroBody args' body ref) = do
     ref' <- newIORef $ Extended empty ref
-    defines ref' args' $ End : args
+    defines ref' args' $ (Evaled Return) : args
     eval ref' body

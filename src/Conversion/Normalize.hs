@@ -4,11 +4,11 @@ module Conversion.Normalize where
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad.Error (throwError)
-import Data.Traversable (Traversable, traverse)
 
 import Types.Core
 import Types.Exception
 import Types.Syntax
+import Util
 
 normalize :: MonadScheme m => Expr -> SchemeT m Expr
 normalize expr = normalizeExpr $ flattenList expr
@@ -22,8 +22,9 @@ flattenList v = v
 
 normalizeExpr :: MonadScheme m => Expr -> SchemeT m Expr
 normalizeExpr c@(Const _) = return c
-normalizeExpr i@(Ident _) = return i
+normalizeExpr (Ident i) = return $ prim i
 normalizeExpr (List l) = normalizeList l
+normalizeExpr n@(Normalized _) = return n
 normalizeExpr e@(Evaled _) = return e
 
 normalizeList :: MonadScheme m => List Expr -> SchemeT m Expr
@@ -88,12 +89,6 @@ splitArgs exprs = extractIdents exprs >>= split
     split (DottedList (name:params) param) =
         return (name, DottedList params param)
 
-extractIdents :: (MonadScheme m, Traversable t) => t Expr -> SchemeT m (t Ident)
-extractIdents = traverse extract
-  where
-    extract (Ident i) = return i
-    extract s = throwError $ SyntaxError $ show s
-
 lambdaBody :: MonadScheme m => List Ident -> [Expr] -> SchemeT m Expr
 lambdaBody _ [] = throwError $ SyntaxError "lambda body must be one or more expressions"
 lambdaBody args es = do
@@ -102,3 +97,15 @@ lambdaBody args es = do
 
 construct :: MonadScheme m => Ident -> [Expr] -> SchemeT m Expr
 construct i es = return $ List $ ProperList $ Ident i : es
+
+prim :: Ident -> Expr
+prim "+" = Normalized $ Prim Add
+prim "-" = Normalized $ Prim Sub
+prim "*" = Normalized $ Prim Mul
+prim "/" = Normalized $ Prim Div
+prim "=" = Normalized $ Prim Equal
+prim "eqv?" = Normalized $ Prim Eqv
+prim "car" = Normalized $ Prim Car
+prim "cdr" = Normalized $ Prim Cdr
+prim "cons" = Normalized $ Prim Cons
+prim v = Ident v

@@ -12,8 +12,7 @@ import Core (scheme)
 import Initial (initialEnv, initialLoad)
 import Types.Core (SchemeT (..))
 import Types.Exception (SchemeException (..))
-import Types.Macro (Macro)
-import Types.Syntax.After (EnvRef)
+import Types.Syntax (EnvRef, Macro)
 
 main :: IO ()
 main = do

@@ -14,6 +14,7 @@ cpsExpr c@(Const _) cc = return $ list [cc, c]
 cpsExpr i@(Ident _) cc = return $ list [cc, i]
 cpsExpr (List (ProperList es)) cc = cpsList es cc
 cpsExpr (List (DottedList es e)) cc = return $ list [cc, List $ DottedList es e]
+cpsExpr n@(Normalized _) cc = return $ list [cc, n]
 cpsExpr e@(Evaled _) cc = return $ list [cc, e]
 
 cpsList :: [Expr] -> CC -> State Int Expr
@@ -44,7 +45,7 @@ cpsList [Ident "call/cc", e] cc = do
     put n'
     return $ list [cc, list [e, cc']]
 cpsList [Ident "quote", e] cc = return $ list [cc, listIdent "quote" [e]]
-cpsList [Ident "quasi-quote", e] cc = return $ list [cc, listIdent "quasi-quote" [e]]
+cpsList [Ident "quasiquote", e] cc = return $ list [cc, listIdent "quasiquote" [e]]
 cpsList [Ident "unquote", e] cc = return $ list [cc, listIdent "unquote" [e]]
 cpsList [Ident "unquote-splicing", e] cc = return $ list [cc, listIdent "unquote-splicing" [e]]
 cpsList ((Ident "begin") : e : es) cc = do

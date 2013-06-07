@@ -19,6 +19,7 @@ instance Show Expr where
     show (Const c) = show c
     show (Ident i) = show i
     show (List l) = show l
+    show (Normalized n) = show n
     show (Evaled e) = show e
 
 type Ident = String
@@ -86,20 +87,8 @@ instance Show Prim where
     show Cdr = "cdr"
     show Cons = "cons"
 
-prim :: Ident -> Expr
-prim "+" = Normalized $ Prim Add
-prim "-" = Normalized $ Prim Sub
-prim "*" = Normalized $ Prim Mul
-prim "/" = Normalized $ Prim Div
-prim "=" = Normalized $ Prim Equal
-prim "eqv?" = Normalized $ Prim Eqv
-prim "car" = Normalized $ Prim Car
-prim "cdr" = Normalized $ Prim Cdr
-prim "cons" = Normalized $ Prim Cons
-prim v = Ident v
-
 data Evaled
-    = Func Args Expr EnvRef
+    = Func (List Ident) Expr EnvRef
     | Return
     deriving (Eq)
 
@@ -121,6 +110,6 @@ data Env
 
 type Macro = Map Ident MacroBody
 
-data MacroBody = MacroBody Args Expr EnvRef
+data MacroBody = MacroBody (List Ident) Expr EnvRef
 
 type CC = Expr
