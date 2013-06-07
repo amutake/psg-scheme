@@ -11,7 +11,7 @@ import Types.Core
 import Types.Exception
 import Types.Syntax
 
-lookupEnv :: MonadBase IO m => EnvRef -> Ident -> SchemeT m Expr
+lookupEnv :: MonadScheme m => EnvRef -> Ident -> SchemeT m Expr
 lookupEnv ref var = readIORef ref >>= lookupEnv'
   where
     lookupEnv' (Global map') =
@@ -19,23 +19,23 @@ lookupEnv ref var = readIORef ref >>= lookupEnv'
     lookupEnv' (Extended map' ref') =
         maybe (lookupEnv ref' var) return $ Map.lookup var map'
 
-define :: MonadBase IO m => EnvRef -> Ident -> Expr -> m Expr
+define :: MonadScheme m => EnvRef -> Ident -> Expr -> m Expr
 define ref var expr = do
     modifyIORef ref (insert var expr)
-    return $ Var var
+    return $ Ident var
 
-defines :: MonadBase IO m => EnvRef -> Args -> [Expr] -> SchemeT m ()
-defines ref (Args (ProperList args)) exprs
+defines :: MonadScheme m => EnvRef -> List Ident -> [Expr] -> SchemeT m ()
+defines ref (ProperList args) exprs
     | length args == length exprs = do
         modifyIORef ref $ union $ Map.fromList $ zip args exprs
     | otherwise = throwError $ NumArgs $ "not match: args: " ++ show args ++ ", exprs: " ++ show exprs
-defines ref (Args (DottedList args arg)) exprs
+defines ref (DottedList args arg) exprs
     | length args > length exprs = throwError $ NumArgs $ "not match: args: " ++ show args ++ ", exprs: " ++ show exprs
     | otherwise = do
         let (init', last') = splitAt (length args) exprs
         modifyIORef ref $ union $ Map.fromList $ zip args init'
         case last' of
-            [] -> modifyIORef ref $ insert arg $ Const Nil
+            [] -> modifyIORef ref $ insert arg $ List $ ProperList []
             x:xs -> modifyIORef ref $ insert arg $ Apply x xs
 
 insert :: Ident -> Expr -> Env -> Env
@@ -46,7 +46,7 @@ union :: Map.Map Ident Expr -> Env -> Env
 union m (Global m') = Global $ Map.union m m'
 union m (Extended m' r) = Extended (Map.union m m') r
 
-setVar :: MonadBase IO m => EnvRef -> Ident -> Expr -> SchemeT m Expr
+setVar :: MonadScheme m => EnvRef -> Ident -> Expr -> SchemeT m Expr
 setVar ref var expr = readIORef ref >>= set
   where
     set (Global map') = set' map' $ throwError $ Unbind var
