@@ -27,7 +27,7 @@ normalizeExpr (List l) = normalizeList l
 normalizeExpr e@(Evaled _) = return e
 
 normalizeList :: MonadScheme m => List Expr -> SchemeT m Expr
-normalizeList (ProperList ((Ident "define"):(Ident var):[expr])) =
+normalizeList (ProperList [Ident "define", Ident var, expr]) =
     e <- normalizeExpr expr
     construct "define" [Ident var, e]
 normalizeList (ProperList ((Ident "define"):(List vars):body)) = do

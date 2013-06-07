@@ -11,6 +11,7 @@ data Expr
     = Const Const
     | Ident Ident
     | List (List Expr)
+    | Normalized Normalized
     | Evaled Evaled
     deriving (Eq)
 
@@ -56,6 +57,46 @@ instance Foldable List where
 instance Traversable List where
     traverse f (ProperList xs) = ProperList <$> traverse f xs
     traverse f (DottedList xs x) = DottedList <$> traverse f xs <*> f x
+
+data Normalized = Prim Prim deriving (Eq)
+
+instance Show Normalized where
+    show (Prim p) = show p
+
+data Prim
+    = Add
+    | Sub
+    | Mul
+    | Div
+    | Equal
+    | Eqv
+    | Car
+    | Cdr
+    | Cons
+    deriving (Eq)
+
+instance Show Prim where
+    show Add = "+"
+    show Sub = "-"
+    show Mul = "*"
+    show Div = "/"
+    show Equal = "="
+    show Eqv = "eqv?"
+    show Car = "car"
+    show Cdr = "cdr"
+    show Cons = "cons"
+
+prim :: Ident -> Normalized
+prim "+" = Prim Add
+prim "-" = Prim Sub
+prim "*" = Prim Mul
+prim "/" = Prim Div
+prim "=" = Prim Equal
+prim "eqv?" = Prim Eqv
+prim "car" = Prim Car
+prim "cdr" = Prim Cdr
+prim "cons" = Prim Cons
+prim v = Var v
 
 data Evaled
     = Func Args Expr EnvRef
