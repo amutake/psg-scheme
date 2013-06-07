@@ -12,6 +12,7 @@ import Control.Monad.State(StateT, MonadState)
 import Control.Monad.Trans.Class (MonadTrans, lift)
 
 import Types.Exception
+import Types.Syntax
 
 newtype SchemeT m a = SchemeT
     { runSchemeT :: ErrorT SchemeException (StateT Macro m) a

@@ -86,17 +86,17 @@ instance Show Prim where
     show Cdr = "cdr"
     show Cons = "cons"
 
-prim :: Ident -> Normalized
-prim "+" = Prim Add
-prim "-" = Prim Sub
-prim "*" = Prim Mul
-prim "/" = Prim Div
-prim "=" = Prim Equal
-prim "eqv?" = Prim Eqv
-prim "car" = Prim Car
-prim "cdr" = Prim Cdr
-prim "cons" = Prim Cons
-prim v = Var v
+prim :: Ident -> Expr
+prim "+" = Normalized $ Prim Add
+prim "-" = Normalized $ Prim Sub
+prim "*" = Normalized $ Prim Mul
+prim "/" = Normalized $ Prim Div
+prim "=" = Normalized $ Prim Equal
+prim "eqv?" = Normalized $ Prim Eqv
+prim "car" = Normalized $ Prim Car
+prim "cdr" = Normalized $ Prim Cdr
+prim "cons" = Normalized $ Prim Cons
+prim v = Ident v
 
 data Evaled
     = Func Args Expr EnvRef
