@@ -60,6 +60,7 @@ cpsList [Ident "if", b, t, f] cc = do
     t' <- cpsExpr t cc
     f' <- cpsExpr f cc
     cpsExpr b $ listIdent "lambda" [list [Ident var], listIdent "if" [Ident var, t', f']]
+cpsList [Ident "load", path] cc = return $ list [cc, listIdent "load" [path]]
 cpsList [] cc = return $ list [cc, list []]
 cpsList (f : args) cc = do
     (fvar : vars) <- getVars $ length (f : args)

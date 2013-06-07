@@ -73,6 +73,11 @@ normalizeList (ProperList [Ident "if", b , t]) = do
     construct "if" [b', t', Const Undefined]
 normalizeList (ProperList (Ident "if" : _)) =
     throwError $ SyntaxError "if"
+normalizeList (ProperList [Ident "load", e]) = do
+    e' <- normalizeExpr e
+    construct "load" [e']
+normalizeList (ProperList ((Ident "load") : _)) =
+    throwError $ SyntaxError "load"
 normalizeList (ProperList ((Ident "call-with-current-continuation"):es)) =
     construct "call/cc" es
 normalizeList (ProperList es) =

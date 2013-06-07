@@ -74,6 +74,11 @@ evalList ref [Ident "if", b, t, f] = do
     case b' of
         Const (Bool True) -> eval ref t
         _ -> eval ref f
+evalList ref [Ident "load", e] = do
+    e' <- eval ref e
+    case e' of
+        Const (String s) -> load ref s
+        _ -> throwError $ TypeMismatch "String"
 evalList ref (f : es) = do
     f' <- eval ref f
     es' <- mapM (eval ref) es
@@ -127,18 +132,17 @@ applyPrim Car = primCar
 applyPrim Cdr = primCdr
 applyPrim Cons = primCons
 
-load :: MonadScheme m => EnvRef -> Expr -> SchemeT m Expr
-load ref e = do
-    path <- extractString e
+load :: MonadScheme m => EnvRef -> FilePath -> SchemeT m Expr
+load ref path = do
     result <- liftIO $ try $ readFile path
     case result of
         Left err -> throwError $ IOError err
         Right str -> (scheme ref str >> return (Const $ Bool True)) `catchError`
             (\err -> liftIO (print err) >> return (Const $ Bool False))
 
-extractString :: Monad m => Expr -> SchemeT m String
-extractString (Const (String str)) = return str
-extractString _ = throwError $ TypeMismatch "String"
+-- extractString :: Monad m => Expr -> SchemeT m String
+-- extractString (Const (String str)) = return str
+-- extractString _ = throwError $ TypeMismatch "String"
 
 putMacro :: MonadBase IO m => Ident -> Expr -> SchemeT m Expr
 putMacro var (Evaled (Func args expr ref)) = do
