@@ -81,3 +81,5 @@ data Env
 type Macro = Map Ident MacroBody
 
 data MacroBody = MacroBody Args Expr EnvRef
+
+type CC = Expr

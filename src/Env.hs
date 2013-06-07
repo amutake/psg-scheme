@@ -9,8 +9,7 @@ import qualified Data.Map as Map
 
 import Types.Core
 import Types.Exception
-import Types.Syntax.After
-import Types.Util
+import Types.Syntax
 
 lookupEnv :: MonadBase IO m => EnvRef -> Ident -> SchemeT m Expr
 lookupEnv ref var = readIORef ref >>= lookupEnv'

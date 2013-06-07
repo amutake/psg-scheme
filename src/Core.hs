@@ -23,9 +23,7 @@ import Conversion.CPS (cps)
 import Parser (parse)
 import Types.Core (SchemeT (..))
 import Types.Exception
-import Types.Syntax.After
-import Types.Macro
-import Types.Util
+import Types.Syntax
 
 #ifdef DEBUG
 scheme :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => EnvRef -> String -> SchemeT m [Expr]

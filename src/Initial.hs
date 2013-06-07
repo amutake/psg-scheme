@@ -8,9 +8,7 @@ import Data.Map (Map, fromList, empty)
 
 import Core (scheme)
 import Types.Core
-import Types.Macro
-import Types.Syntax.After
-import Types.Util
+import Types.Syntax
 
 initialEnv :: Env
 initialEnv = Global primitives

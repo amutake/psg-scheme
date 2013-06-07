@@ -1,6 +1,6 @@
 module Util where
 
-import Types.Util
+import Types.Syntax
 
 cons :: a -> List a -> List a
 cons x (ProperList xs) = ProperList (x:xs)

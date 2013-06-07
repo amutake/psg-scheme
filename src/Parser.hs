@@ -12,8 +12,7 @@ import qualified Text.Trifecta as T
 
 import Types.Core
 import Types.Exception
-import Types.Syntax.Before
-import Types.Util
+import Types.Syntax
 
 parse :: Monad m => String -> SchemeT m [Expr]
 parse str = case T.parseString parseExprs mempty str of

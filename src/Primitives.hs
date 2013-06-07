@@ -7,8 +7,7 @@ import Control.Monad.Error (MonadError (..))
 
 import Types.Core
 import Types.Exception
-import Types.Syntax.After
-import Types.Util
+import Types.Syntax
 
 primAdd :: Monad m => [Expr] -> SchemeT m Expr
 primAdd = foldM add (Const $ Number 0)

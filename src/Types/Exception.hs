@@ -7,7 +7,7 @@ import Control.Monad.Error.Class (Error)
 import Data.Typeable (Typeable)
 import Text.PrettyPrint.ANSI.Leijen (Doc)
 
-import Types.Util
+import Types.Syntax
 
 data SchemeException
     = ParseError Doc

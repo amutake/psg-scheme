@@ -3,12 +3,11 @@ module Conversion.CPS where
 import Control.Monad
 import Control.Monad.State
 
-import Types.Syntax.After
-import Types.Util
+import Types.Syntax
 import Util
 
 cps :: Expr -> Expr
-cps e = evalState (cpsExpr e End) 1
+cps e = evalState (cpsExpr e (Evaled Return)) 1
 
 cpsExpr :: Expr -> CC -> State Int Expr
 cpsExpr c@(Const _) cc = return $ Apply cc [c]
