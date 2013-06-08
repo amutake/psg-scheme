@@ -48,7 +48,8 @@ normalizeList (ProperList ((Ident "lambda"):(Ident args):body)) = do
     let args' = List $ DottedList [] $ Ident args
     lambdaBody args' body
 normalizeList (ProperList ((Ident "lambda"):(List args):body)) = do
-    lambdaBody (List args) body
+    args' <- normalizeExpr $ List args
+    lambdaBody args' body
 normalizeList (ProperList ((Ident "lambda"):_)) =
     throwError $ SyntaxError "lambda"
 normalizeList (ProperList [Ident "begin"]) = return $ Const Undefined
