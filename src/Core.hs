@@ -174,4 +174,7 @@ conv :: MonadScheme m => [Expr] -> MacroBody -> SchemeT m Expr
 conv args (MacroBody args' body ref) = do
     ref' <- newIORef $ Extended empty ref
     defines ref' args' $ (Evaled Return) : args
+#ifdef DEBUG
+    liftIO $ print $ MacroBody args' body ref
+#endif
     eval ref' body

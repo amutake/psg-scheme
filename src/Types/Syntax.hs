@@ -118,4 +118,11 @@ type Macro = Map Ident MacroBody
 
 data MacroBody = MacroBody (List Ident) Expr EnvRef
 
+instance Show MacroBody where
+    show (MacroBody args e ref) = "args: " ++ show args ++ ", body: " ++ show e ++ ",\nenv: " ++ envString
+      where
+        envString = unsafePerformIO $ do
+            env <- readIORef ref
+            return $ show env
+
 type CC = Expr
