@@ -18,3 +18,9 @@
             (car args)
             `(let ((+value+ ,(car args)))
                (if +value+ +value+ (or ,@(cdr args))))))))
+
+(define-macro let*
+  (lambda (args . body)
+    (if (null? (cdr args))
+        `(let (,(car args)) ,@body)
+        `(let (,(car args)) (let* ,(cdr args) ,@body)))))

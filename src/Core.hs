@@ -86,12 +86,18 @@ evalList ref (f : es) = do
 #ifdef DEBUG
     liftIO $ putStrLn $ ("  apply-before: " ++) $ show $ List $ ProperList (f : es)
     liftIO $ putStrLn $ ("  fun-args-eval: " ++) $ show $ List $ ProperList (f' : es')
-    env <- readIORef ref
-    liftIO $ putStrLn $ show env
+    -- env <- readIORef ref
+    -- liftIO $ putStrLn $ show env
 #endif
     case f' of
         Evaled Return -> return $ last es'
-        _ -> apply ref f' es'
+        _ -> do
+            e' <- apply ref f' es'
+#ifdef DEBUG
+            liftIO $ putStrLn $ ("  apply-result: " ++) $ show e'
+            liftIO $ putStrLn ""
+#endif
+            return e'
 evalList _ [] = return $ List nil
 
 evalQuasiQuote :: MonadScheme m => EnvRef -> Expr -> SchemeT m Expr
@@ -112,9 +118,9 @@ evalListQuasiQuote ref es = List . ProperList <$> go ref es
     go ref' ((List (ProperList [Ident "unquote-splicing", e])) : es') = do
         e' <- eval ref' e
 #ifdef DEBUG
-        env <- readIORef ref'
-        liftIO $ putStrLn $ show env
-        liftIO $ putStrLn $ ("  evalQuasiQuote: " ++) $ show $ List $ ProperList (e : es')
+        -- env <- readIORef ref'
+        -- liftIO $ putStrLn $ show env
+        -- liftIO $ putStrLn $ ("  evalQuasiQuote: " ++) $ show $ List $ ProperList (e : es')
 #endif
         case e' of
             List (ProperList es'') -> (es'' ++) <$> go ref' es'
@@ -148,10 +154,14 @@ load ref path = do
         Right str -> (scheme ref str >> return (Const $ Bool True)) `catchError`
             (\err -> liftIO (print err) >> return (Const $ Bool False))
 
-putMacro :: MonadBase IO m => Ident -> Expr -> SchemeT m Expr
+putMacro :: MonadScheme m => Ident -> Expr -> SchemeT m Expr
 putMacro var (Evaled (Func args expr ref)) = do
     mac <- get
     put $ M.insert var (MacroBody args expr ref) mac
+#ifdef DEBUG
+    -- mac' <- get
+    -- liftIO $ print mac'
+#endif
     return $ Ident var
 putMacro _ _ = throwError $ SyntaxError "define-macro"
 
@@ -169,6 +179,7 @@ macro e@(Evaled _) = return e
 
 macroList :: MonadScheme m => [Expr] -> SchemeT m Expr
 macroList [] = return $ List nil
+macroList ((Ident "define-macro") : es) = return $ List . ProperList $ Ident "define-macro" : es
 macroList ((Ident v) : es) = do
     m <- get
     maybe (List . ProperList <$> (Ident v :) <$> mapM macro es) (conv es) $ M.lookup v m
@@ -183,5 +194,4 @@ conv args (MacroBody args' body ref) = do
     liftIO $ print $ MacroBody args' body ref
 #endif
     e <- eval ref' body
-    e' <- macro e
-    if e == e' then return e else macro e'
+    macro e
