@@ -23,7 +23,6 @@ import qualified Data.Map as M
 import Env
 import Primitives
 import Conversion.Normalize (normalize)
-import Conversion.CPS (cps)
 import Parser (parse)
 import Types.Core
 import Types.Exception
@@ -40,13 +39,11 @@ scheme ref s = do
         liftIO $ putStrLn $ "macro: " ++ show me
         ae <- normalize me
         liftIO $ putStrLn $ "normalize: " ++ show ae
-        let ce = cps ae
-        liftIO $ putStrLn $ "cps: " ++ show ce
-        eval ref ce
+        eval ref ae
         ) bes
 #else
 scheme :: MonadScheme m => EnvRef -> String -> SchemeT m [Expr]
-scheme ref = parse >=> mapM (macro >=> normalize >=> eval ref . cps)
+scheme ref = parse >=> mapM (macro >=> normalize >=> eval ref)
 #endif
 
 ----------------
