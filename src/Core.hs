@@ -84,10 +84,10 @@ evalList ref (f : es) = do
     f' <- eval ref f
     es' <- mapM (eval ref) es
 #ifdef DEBUG
+    liftIO $ putStrLn $ ("  apply-before: " ++) $ show $ List $ ProperList (f : es)
+    liftIO $ putStrLn $ ("  fun-args-eval: " ++) $ show $ List $ ProperList (f' : es')
     env <- readIORef ref
     liftIO $ putStrLn $ show env
-    liftIO $ putStrLn $ ("  apply-before: " ++) $ show $ List $ ProperList (f : es)
-    liftIO $ putStrLn $ ("  apply-after: " ++) $ show $ List $ ProperList (f' : es')
 #endif
     case f' of
         Evaled Return -> return $ last es'
@@ -111,14 +111,18 @@ evalListQuasiQuote ref es = List . ProperList <$> go ref es
     go _ [] = return []
     go ref' ((List (ProperList [Ident "unquote-splicing", e])) : es') = do
         e' <- eval ref' e
+#ifdef DEBUG
+        env <- readIORef ref'
+        liftIO $ putStrLn $ show env
+        liftIO $ putStrLn $ ("  evalQuasiQuote: " ++) $ show $ List $ ProperList (e : es')
+#endif
         case e' of
             List (ProperList es'') -> (es'' ++) <$> go ref' es'
             _ -> throwError $ SyntaxError ",@expr must be evaluated to list"
     go ref' (e : es') = (:) <$> evalQuasiQuote ref' e <*> go ref' es'
 
 apply :: MonadScheme m => EnvRef -> Expr -> [Expr] -> SchemeT m Expr
-apply ref (Normalized (Prim f)) (cc:es) =
-    (List . ProperList <$> two cc <$> List . ProperList <$> two (Ident "quote") <$> applyPrim f es) >>= eval ref
+apply _ (Normalized (Prim f)) es = applyPrim f es
 apply _ (Evaled (Func args body closure)) es = do
     ref <- newIORef $ Extended empty closure
     defines ref args es
@@ -173,8 +177,9 @@ macroList es = List . ProperList <$> mapM macro es
 conv :: MonadScheme m => [Expr] -> MacroBody -> SchemeT m Expr
 conv args (MacroBody args' body ref) = do
     ref' <- newIORef $ Extended empty ref
-    defines ref' args' $ (Evaled Return) : args
+    defines ref' args' $ args
 #ifdef DEBUG
+    liftIO $ putStrLn $ "exprs: " ++ show args
     liftIO $ print $ MacroBody args' body ref
 #endif
     eval ref' body
