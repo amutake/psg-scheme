@@ -182,4 +182,6 @@ conv args (MacroBody args' body ref) = do
     liftIO $ putStrLn $ "exprs: " ++ show args
     liftIO $ print $ MacroBody args' body ref
 #endif
-    eval ref' body
+    e <- eval ref' body
+    e' <- macro e
+    if e == e' then return e else macro e'
