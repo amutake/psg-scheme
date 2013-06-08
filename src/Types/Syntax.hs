@@ -2,10 +2,11 @@ module Types.Syntax where
 
 import Control.Applicative ((<$>), (<*>))
 import Data.Foldable (Foldable (..))
-import Data.IORef.Lifted (IORef)
-import Data.Map (Map)
+import Data.IORef.Lifted (IORef, readIORef)
+import Data.Map (Map, toList)
 import Data.Traversable (Traversable (..))
 import Prelude hiding (foldr)
+import System.IO.Unsafe (unsafePerformIO)
 
 data Expr
     = Const Const
@@ -107,6 +108,11 @@ type EnvRef = IORef Env
 data Env
     = Global (Map Ident Expr)
     | Extended (Map Ident Expr) EnvRef
+
+instance Show Env where
+    show (Global m) = concatMap (\(i, e) -> " - " ++ i ++ " : " ++ show e ++ "\n") $ toList m
+    show (Extended m ref) = concatMap (\(i, e) -> " - " ++ i ++ " : " ++ show e ++ "\n") (toList m) ++
+                            show (unsafePerformIO (readIORef ref))
 
 type Macro = Map Ident MacroBody
 

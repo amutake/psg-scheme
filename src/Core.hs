@@ -12,7 +12,11 @@ import Control.Monad.Base (MonadBase)
 import Control.Monad.Error (MonadError (..))
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.State (MonadState (..))
+#ifdef DEBUG
+import Data.IORef.Lifted (newIORef, readIORef)
+#else
 import Data.IORef.Lifted (newIORef)
+#endif
 import Data.Map (empty)
 import qualified Data.Map as M
 
@@ -32,17 +36,17 @@ scheme ref s = do
     bes <- parse s
     liftIO $ putStrLn $ "parse: " ++ show bes
     mapM (\be -> do
-        ae <- normalize be
-        liftIO $ putStrLn $ "normalize: " ++ show ae
-        me <- macro ae
+        me <- macro be
         liftIO $ putStrLn $ "macro: " ++ show me
-        let ce = cps me
+        ae <- normalize me
+        liftIO $ putStrLn $ "normalize: " ++ show ae
+        let ce = cps ae
         liftIO $ putStrLn $ "cps: " ++ show ce
         eval ref ce
         ) bes
 #else
 scheme :: MonadScheme m => EnvRef -> String -> SchemeT m [Expr]
-scheme ref = parse >=> mapM (normalize >=> macro >=> eval ref . cps)
+scheme ref = parse >=> mapM (macro >=> normalize >=> eval ref . cps)
 #endif
 
 ----------------
@@ -83,6 +87,8 @@ evalList ref (f : es) = do
     f' <- eval ref f
     es' <- mapM (eval ref) es
 #ifdef DEBUG
+    env <- readIORef ref
+    liftIO $ putStrLn $ show env
     liftIO $ putStrLn $ ("  apply-before: " ++) $ show $ List $ ProperList (f : es)
     liftIO $ putStrLn $ ("  apply-after: " ++) $ show $ List $ ProperList (f' : es')
 #endif
