@@ -33,7 +33,7 @@ normalizeList (ProperList [Ident "define", Ident var, expr]) = do
     construct "define" [Ident var, e]
 normalizeList (ProperList ((Ident "define"):(List vars):body)) = do
     (var, args) <- splitArgs vars
-    l <- lambdaBody args body
+    l <- lambdaBody (List $ fmap Ident args) body
     construct "define" [Ident var, l]
 normalizeList (ProperList ((Ident "define"):_)) =
     throwError $ SyntaxError "define"
@@ -42,14 +42,13 @@ normalizeList (ProperList ((Ident "define-macro"):(Ident var):[expr])) = do
     construct "define-macro" [Ident var, e]
 normalizeList (ProperList ((Ident "define-macro"):(List vars):body)) = do
     (var, args) <- splitArgs vars
-    l <- lambdaBody args body
+    l <- lambdaBody (List $ fmap Ident args) body
     construct "define-macro" [Ident var, l]
 normalizeList (ProperList ((Ident "lambda"):(Ident args):body)) = do
-    let args' = DottedList [] args
+    let args' = List $ DottedList [] $ Ident args
     lambdaBody args' body
 normalizeList (ProperList ((Ident "lambda"):(List args):body)) = do
-    args' <- extractIdents args
-    lambdaBody args' body
+    lambdaBody (List args) body
 normalizeList (ProperList ((Ident "lambda"):_)) =
     throwError $ SyntaxError "lambda"
 normalizeList (ProperList [Ident "begin"]) = return $ Const Undefined
@@ -94,11 +93,11 @@ splitArgs exprs = extractIdents exprs >>= split
     split (DottedList (name:params) param) =
         return (name, DottedList params param)
 
-lambdaBody :: MonadScheme m => List Ident -> [Expr] -> SchemeT m Expr
+lambdaBody :: MonadScheme m => Expr -> [Expr] -> SchemeT m Expr
 lambdaBody _ [] = throwError $ SyntaxError "lambda body must be one or more expressions"
 lambdaBody args es = do
     e <- normalizeList $ ProperList $ Ident "begin" : es
-    construct "lambda" $ List (fmap Ident args) : [e]
+    construct "lambda" $ args : [e]
 
 construct :: MonadScheme m => Ident -> [Expr] -> SchemeT m Expr
 construct i es = return $ List $ ProperList $ Ident i : es
