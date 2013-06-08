@@ -17,7 +17,7 @@ data Expr
 
 instance Show Expr where
     show (Const c) = show c
-    show (Ident i) = show i
+    show (Ident i) = i
     show (List l) = show l
     show (Normalized n) = show n
     show (Evaled e) = show e

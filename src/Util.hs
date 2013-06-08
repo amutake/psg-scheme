@@ -20,4 +20,7 @@ extractIdents :: (MonadScheme m, Traversable t) => t Expr -> SchemeT m (t Ident)
 extractIdents = traverse extract
   where
     extract (Ident i) = return i
-    extract s = throwError $ SyntaxError $ show s
+    extract s = throwError $ SyntaxError $ "extractIdents: " ++ show s
+
+two :: a -> a -> [a]
+two a b = [a, b]

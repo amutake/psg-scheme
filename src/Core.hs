@@ -88,7 +88,7 @@ evalList ref (f : es) = do
 #endif
     case f' of
         Evaled Return -> return $ last es'
-        _ -> apply f' es'
+        _ -> apply ref f' es'
 evalList _ [] = return $ List nil
 
 evalQuasiQuote :: MonadScheme m => EnvRef -> Expr -> SchemeT m Expr
@@ -113,15 +113,16 @@ evalListQuasiQuote ref es = List . ProperList <$> go ref es
             _ -> throwError $ SyntaxError ",@expr must be evaluated to list"
     go ref' (e : es') = (:) <$> evalQuasiQuote ref' e <*> go ref' es'
 
-apply :: MonadScheme m => Expr -> [Expr] -> SchemeT m Expr
-apply (Normalized (Prim f)) es = applyPrim f es
-apply (Evaled (Func args body closure)) es = do
+apply :: MonadScheme m => EnvRef -> Expr -> [Expr] -> SchemeT m Expr
+apply ref (Normalized (Prim f)) (cc:es) =
+    (List . ProperList <$> two cc <$> List . ProperList <$> two (Ident "quote") <$> applyPrim f es) >>= eval ref
+apply _ (Evaled (Func args body closure)) es = do
     ref <- newIORef $ Extended empty closure
     defines ref args es
     eval ref body
-apply e _ = throwError $ NotFunction $ show e
+apply _ e _ = throwError $ NotFunction $ show e
 
-applyPrim :: (Functor m, Monad m, MonadIO m, MonadBase IO m) => Prim -> [Expr] -> SchemeT m Expr
+applyPrim :: MonadScheme m => Prim -> [Expr] -> SchemeT m Expr
 applyPrim Add = primAdd
 applyPrim Sub = primSub
 applyPrim Mul = primMul
@@ -139,10 +140,6 @@ load ref path = do
         Left err -> throwError $ IOError err
         Right str -> (scheme ref str >> return (Const $ Bool True)) `catchError`
             (\err -> liftIO (print err) >> return (Const $ Bool False))
-
--- extractString :: Monad m => Expr -> SchemeT m String
--- extractString (Const (String str)) = return str
--- extractString _ = throwError $ TypeMismatch "String"
 
 putMacro :: MonadBase IO m => Ident -> Expr -> SchemeT m Expr
 putMacro var (Evaled (Func args expr ref)) = do

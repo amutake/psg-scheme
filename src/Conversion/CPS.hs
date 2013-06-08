@@ -30,14 +30,6 @@ cpsList [Ident "lambda", List args, e] cc = do
     var <- getVar
     e' <- cpsExpr e $ Ident var
     return $ list [cc, listIdent "lambda" [List $ cons (Ident var) args, e']]
-cpsList (p@(Normalized (Prim _)) : args) cc = do
-    vars <- getVars $ length args
-    go cc vars $ zip vars args
-  where
-    go c vars' [] = return $ list [c, list (p : map Ident vars')]
-    go c vars' ((var, arg) : args') = do
-        e <- go c vars' args'
-        cpsExpr arg $ listIdent "lambda" [list [Ident var], e]
 cpsList [Ident "call/cc", e] cc = do
     var <- getVar
     n <- get
