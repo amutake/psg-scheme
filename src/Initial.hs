@@ -22,6 +22,6 @@ initialLoad :: EnvRef -> IO Macro
 initialLoad ref = execStateT (runErrorT $ runSchemeT $ scheme ref loadStr) empty
   where
     loadStr = concat $ map (\s -> "(load \"" ++ s ++ "\")")
-        [ "lib/util.scm"
-        , "lib/syntax.scm"
+        [ "lib/syntax.scm"
+        , "lib/util.scm"
         ]

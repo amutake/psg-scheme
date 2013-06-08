@@ -179,7 +179,8 @@ macro e@(Evaled _) = return e
 
 macroList :: MonadScheme m => [Expr] -> SchemeT m Expr
 macroList [] = return $ List nil
-macroList ((Ident "define-macro") : es) = return $ List . ProperList $ Ident "define-macro" : es
+macroList ((Ident "quote") : es) = return $ List . ProperList $ Ident "quote" : es
+macroList ((Ident "quasiquote") : es) = return $ List . ProperList $ Ident "quasiquote" : es
 macroList ((Ident v) : es) = do
     m <- get
     maybe (List . ProperList <$> (Ident v :) <$> mapM macro es) (conv es) $ M.lookup v m

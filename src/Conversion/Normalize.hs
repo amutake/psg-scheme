@@ -60,8 +60,8 @@ normalizeList (ProperList ((Ident "begin"):es)) = do
 normalizeList (ProperList [Ident "set!", Ident var, e]) = do
     e' <- normalizeExpr e
     construct "set!" [Ident var, e']
-normalizeList (ProperList ((Ident "set!"):_)) =
-    throwError $ SyntaxError "set!"
+-- normalizeList (ProperList ((Ident "set!"):_)) =
+--     throwError $ SyntaxError "set!"
 normalizeList (ProperList [Ident "if", b, t, f]) = do
     b' <- normalizeExpr b
     t' <- normalizeExpr t

@@ -1,3 +1,15 @@
+(define cadr (lambda (x) (car (cdr x))))
+(define cdar (lambda (x) (cdr (car x))))
+(define caar (lambda (x) (car (car x))))
+(define cddr (lambda (x) (cdr (cdr x))))
+
+(define (null? x) (if (eqv? x '()) #t #f))
+
+(define (map f xs)
+  (if (null? xs)
+      xs
+      (cons (f (car xs)) (map f (cdr xs)))))
+
 (define-macro let
   (lambda (args . body)
     `((lambda ,(map car args) ,@body) ,@(map cadr args))))
@@ -24,3 +36,17 @@
     (if (null? (cdr args))
         `(let (,(car args)) ,@body)
         `(let (,(car args)) (let* ,(cdr args) ,@body)))))
+
+(define map-2
+  (lambda (fn xs ys)
+    (if (null? xs)
+        '()
+        (cons (fn (car xs) (car ys)) (map-2 fn (cdr xs) (cdr ys))))))
+
+(define-macro letrec
+  (lambda (args . body)
+    (let ((vars (map car args))
+          (vals (map cadr args)))
+      `(let ,(map (lambda (x) `(,x 'undefined)) vars)
+         ,@(map-2 (lambda (x y) `(set! ,x ,y)) vars vals)
+         ,@body))))

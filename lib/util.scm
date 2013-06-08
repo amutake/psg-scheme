@@ -1,10 +1,3 @@
-(define (list . xs) xs)
-
-(define cadr (lambda (x) (car (cdr x))))
-(define cdar (lambda (x) (cdr (car x))))
-(define caar (lambda (x) (car (car x))))
-(define cddr (lambda (x) (cdr (cdr x))))
-
 (define (append xs ys)
   (if (null? xs)
       ys
@@ -12,9 +5,12 @@
 
 (define (not x) (if x #f #t))
 
-(define (null? x) (if (eqv? x '()) #t #f))
+(define reverse
+  (lambda (ls)
+    (letrec ((iter (lambda (ls a)
+                     (if (null? ls)
+                         a
+                         (iter (cdr ls) (cons (car ls) a))))))
+      (iter ls '()))))
 
-(define (map f xs)
-  (if (null? xs)
-      xs
-      (cons (f (car xs)) (map f (cdr xs)))))
+(define (list . xs) xs)
