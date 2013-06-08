@@ -73,8 +73,8 @@ evalList ref [Ident "set!", Ident v, e] = eval ref e >>= setVar ref v
 evalList ref [Ident "if", b, t, f] = do
     b' <- eval ref b
     case b' of
-        Const (Bool True) -> eval ref t
-        _ -> eval ref f
+        Const (Bool False) -> eval ref f
+        _ -> eval ref t
 evalList ref [Ident "load", e] = do
     e' <- eval ref e
     case e' of
