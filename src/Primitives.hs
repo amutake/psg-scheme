@@ -77,3 +77,8 @@ primCons [x, List (ProperList ys)] = return $ List $ cons x $ ProperList ys
 primCons [x, List (DottedList ys y)] = return $ List $ DottedList (x : ys) y
 primCons [x, y] = return $ List $ DottedList [x] y
 primCons _ = throwError $ NumArgs "cons: args == 2"
+
+primPair :: Monad m => [Expr] -> SchemeT m Expr
+primPair [List _] = return $ Const $ Bool True
+primPair [_] = return $ Const $ Bool False
+primPair _ = throwError $ NumArgs "pair?: args == 1"

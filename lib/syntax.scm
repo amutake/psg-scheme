@@ -12,7 +12,10 @@
 
 (define-macro let
   (lambda (args . body)
-    `((lambda ,(map car args) ,@body) ,@(map cadr args))))
+    (if (pair? args)
+        `((lambda ,(map car args) ,@body) ,@(map cadr args))
+        `(letrec ((,args (lambda ,(map car (car body)) ,@(cdr body))))
+           (,args ,@(map cadr (car body)))))))
 
 (define-macro and
   (lambda args

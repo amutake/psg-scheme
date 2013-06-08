@@ -14,3 +14,10 @@
       (iter ls '()))))
 
 (define (list . xs) xs)
+
+(define reverse*
+  (lambda (ls)
+    (let loop ((ls ls) (a '()))
+      (if (null? ls)
+          a
+          (loop (cdr ls) (cons (car ls) a))))))

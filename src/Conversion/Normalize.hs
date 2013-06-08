@@ -113,4 +113,5 @@ prim "eqv?" = Normalized $ Prim Eqv
 prim "car" = Normalized $ Prim Car
 prim "cdr" = Normalized $ Prim Cdr
 prim "cons" = Normalized $ Prim Cons
+prim "pair?" = Normalized $ Prim Pair
 prim v = Ident v

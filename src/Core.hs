@@ -145,6 +145,7 @@ applyPrim Eqv = primEqv
 applyPrim Car = primCar
 applyPrim Cdr = primCdr
 applyPrim Cons = primCons
+applyPrim Pair = primPair
 
 load :: MonadScheme m => EnvRef -> FilePath -> SchemeT m Expr
 load ref path = do
