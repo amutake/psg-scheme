@@ -26,8 +26,5 @@ initialLoad ref = do
   where
     exec str = execStateT (runErrorT $ runSchemeT $ scheme ref str) empty
     loadStr = map (\s -> "(load \"" ++ s ++ "\")")
-        [ "lib/shiftreset.scm"
-        , "lib/shift.scm"
-        , "lib/reset.scm"
-        , "lib/test.scm"
+        [ "lib/test.scm"
         ]

@@ -1,1 +1,1 @@
-(+ (reset (lambda () (* (shift (lambda (k) (k 3))) 4))) 5)
+(+ (reset (* (shift (lambda (k) (+ 1 (k 3)))) 4)) 5)
