@@ -58,7 +58,7 @@
   (lambda args
     (if (null? args)
         'undefined
-        (if (eqv? (caar args) 'else)
+        (if (eq? (caar args) 'else)
             `(begin ,@(cdar args))
             (if (null? (cdar args))
                 `(let ((+value+ ,(caar args)))

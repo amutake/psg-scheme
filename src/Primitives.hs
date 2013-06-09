@@ -193,6 +193,7 @@ primEqP [Const (Bool p), Const (Bool q)] = bool $ p == q
 primEqP [Const (Number n), Const (Number m)] = bool $ n == m
 primEqP [Const Undefined, Const Undefined] = bool True
 primEqP [Ident i, Ident k] = bool $ i == k
+primEqP [List (ProperList []), List (ProperList [])] = bool True
 primEqP [Normalized (Prim p), Normalized (Prim q)] = bool $ p == q
 primEqP [_, _] = bool False
 primEqP _ = throwError $ NumArgs "eq?: args == 2"

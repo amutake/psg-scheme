@@ -7,9 +7,9 @@
 
 (define cond-test
   (lambda (x)
-    (cond ((eqv? x 'a) 1)
-          ((eqv? x 'b) 2)
-          ((eqv? x 'c) 3)
+    (cond ((eq? x 'a) 1)
+          ((eq? x 'b) 2)
+          ((eq? x 'c) 3)
           (else 0))))
 
 (define reverse-do
