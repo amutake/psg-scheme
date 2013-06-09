@@ -30,6 +30,7 @@ applyPrim SymbolP = primSymbolP
 applyPrim BooleanP = primBooleanP
 applyPrim StringP = primStringP
 applyPrim StringAppend = primStringAppend
+applyPrim ProcP = primProcP
 
 primAdd :: PrimFunc
 primAdd = foldM add (Const $ Number 0)
@@ -145,3 +146,8 @@ primStringAppend :: PrimFunc
 primStringAppend [Const (String s), Const (String t)] = return $ Const $ String $ s ++ t
 primStringAppend [_, _] = throwError $ TypeMismatch "String"
 primStringAppend _ = throwError $ NumArgs "string-append: args == 2"
+
+primProcP :: PrimFunc
+primProcP [Evaled (Func _ _ _)] = return $ Const $ Bool True
+primProcP [_] = return $ Const $ Bool False
+primProcP _ = throwError $ NumArgs "procedure?: args == 1"

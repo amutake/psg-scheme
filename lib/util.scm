@@ -46,3 +46,8 @@
   (cond ((null? xs) 'undefined)
         ((null? (cdr xs)) (car xs))
         (else (last (cdr xs)))))
+
+(define (even? x)
+  (if (= x 0) #t (odd? (- x 1))))
+(define (odd? x)
+  (if (= x 0) #f (even? (- x 1))))
