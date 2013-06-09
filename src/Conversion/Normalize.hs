@@ -122,4 +122,5 @@ prim "pair?" = Normalized $ Prim Pair
 prim "number?" = Normalized $ Prim NumberP
 prim "symbol?" = Normalized $ Prim SymbolP
 prim "boolean?" = Normalized $ Prim BooleanP
+prim "string?" = Normalized $ Prim StringP
 prim v = Ident v

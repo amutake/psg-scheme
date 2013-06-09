@@ -28,6 +28,7 @@ applyPrim Pair = primPair
 applyPrim NumberP = primNumberP
 applyPrim SymbolP = primSymbolP
 applyPrim BooleanP = primBooleanP
+applyPrim StringP = primStringP
 
 primAdd :: PrimFunc
 primAdd = foldM add (Const $ Number 0)
@@ -133,3 +134,8 @@ primBooleanP :: PrimFunc
 primBooleanP [Const (Bool _)] = return $ Const $ Bool True
 primBooleanP [_] = return $ Const $ Bool False
 primBooleanP _ = throwError $ NumArgs "boolean?: args == 1"
+
+primStringP :: PrimFunc
+primStringP [Const (String _)] = return $ Const $ Bool True
+primStringP [_] = return $ Const $ Bool False
+primStringP _ = throwError $ NumArgs "string?: args == 1"

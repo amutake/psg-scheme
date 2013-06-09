@@ -81,6 +81,7 @@ data Prim
     | NumberP
     | SymbolP
     | BooleanP
+    | StringP
     deriving (Eq)
 
 instance Show Prim where
@@ -99,6 +100,7 @@ instance Show Prim where
     show NumberP = "number?"
     show SymbolP = "symbol?"
     show BooleanP = "boolean?"
+    show StringP = "string?"
 
 data Evaled
     = Func (List Ident) Expr EnvRef
