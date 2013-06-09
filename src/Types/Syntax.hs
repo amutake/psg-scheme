@@ -88,6 +88,8 @@ data Prim
     | NumberString
     | StringNumber
     | ProcP
+    | EqualP
+    | EqP
     deriving (Eq)
 
 instance Show Prim where
@@ -113,6 +115,8 @@ instance Show Prim where
     show NumberString = "number->string"
     show StringNumber = "string->number"
     show ProcP = "procedure?"
+    show EqualP = "equal?"
+    show EqP = "eq?"
 
 prim :: Ident -> Expr
 prim "+" = Normalized $ Prim Add
@@ -137,6 +141,8 @@ prim "string->symbol" = Normalized $ Prim StringSymbol
 prim "number->string" = Normalized $ Prim NumberString
 prim "string->number" = Normalized $ Prim StringNumber
 prim "procedure?" = Normalized $ Prim ProcP
+prim "equal?" = Normalized $ Prim EqualP
+prim "eq?" = Normalized $ Prim EqP
 prim v = Ident v
 
 data Evaled

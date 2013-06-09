@@ -38,6 +38,8 @@ applyPrim StringSymbol = primStringSymbol
 applyPrim NumberString = primNumberString
 applyPrim StringNumber = primStringNumber
 applyPrim ProcP = primProcP
+applyPrim EqualP = primEqualP
+applyPrim EqP = primEqP
 
 primAdd :: PrimFunc
 primAdd = foldM add (Const $ Number 0)
@@ -75,7 +77,7 @@ primEqual :: PrimFunc
 primEqual [] = throwError $ NumArgs "(=): 2 <= args"
 primEqual (_:[]) = throwError $ NumArgs "(=): 2 <= args"
 primEqual (x:xs)
-    | all isNumber (x:xs) = return $ Const $ Bool $ all (== x) xs
+    | all isNumber (x:xs) = bool $ all (== x) xs
     | otherwise = throwError $ TypeMismatch "Number"
 
 isNumber :: Expr -> Bool
@@ -84,23 +86,23 @@ isNumber _ = False
 
 primLT :: PrimFunc
 primLT ((Const (Number n)):(Const (Number m)):ns)
-    | ns == [] = return $ Const $ Bool $ n < m
+    | ns == [] = bool $ n < m
     | otherwise = do
         (Const (Bool b)) <- primLT $ (Const $ Number m) : ns
-        return $ Const $ Bool $ n < m && b
+        bool $ n < m && b
 primLT _ = throwError $ NumArgs "(<): 2 <= args"
 
 primGT :: PrimFunc
 primGT ((Const (Number n)):(Const (Number m)):ns)
-    | ns == [] = return $ Const $ Bool $ n > m
+    | ns == [] = bool $ n > m
     | otherwise = do
         (Const (Bool b)) <- primGT $ (Const $ Number m) : ns
-        return $ Const $ Bool $ n > m && b
+        bool $ n > m && b
 primGT _ = throwError $ NumArgs "(>): 2 <= args"
 
 primEqv :: PrimFunc
 primEqv xs
-    | length xs == 2 = return $ Const $ Bool $ xs !! 0 == xs !! 1
+    | length xs == 2 = bool $ xs !! 0 == xs !! 1
     | otherwise = throwError $ NumArgs "eqv?: args == 2"
 
 primCar :: PrimFunc
@@ -125,28 +127,28 @@ primCons [x, y] = return $ List $ DottedList [x] y
 primCons _ = throwError $ NumArgs "cons: args == 2"
 
 primPair :: PrimFunc
-primPair [List _] = return $ Const $ Bool True
-primPair [_] = return $ Const $ Bool False
+primPair [List _] = bool True
+primPair [_] = bool False
 primPair _ = throwError $ NumArgs "pair?: args == 1"
 
 primNumberP :: PrimFunc
-primNumberP [n] = return $ Const $ Bool $ isNumber n
+primNumberP [n] = bool $ isNumber n
 primNumberP _ = throwError $ NumArgs "number?: args == 1"
 
 primSymbolP :: PrimFunc
-primSymbolP [Ident _] = return $ Const $ Bool True
-primSymbolP [Normalized (Prim _)] = return $ Const $ Bool True
-primSymbolP [_] = return $ Const $ Bool False
+primSymbolP [Ident _] = bool True
+primSymbolP [Normalized (Prim _)] = bool True
+primSymbolP [_] = bool False
 primSymbolP _ = throwError $ NumArgs "symbol?: args == 1"
 
 primBooleanP :: PrimFunc
-primBooleanP [Const (Bool _)] = return $ Const $ Bool True
-primBooleanP [_] = return $ Const $ Bool False
+primBooleanP [Const (Bool _)] = bool True
+primBooleanP [_] = bool False
 primBooleanP _ = throwError $ NumArgs "boolean?: args == 1"
 
 primStringP :: PrimFunc
-primStringP [Const (String _)] = return $ Const $ Bool True
-primStringP [_] = return $ Const $ Bool False
+primStringP [Const (String _)] = bool True
+primStringP [_] = bool False
 primStringP _ = throwError $ NumArgs "string?: args == 1"
 
 primStringAppend :: PrimFunc
@@ -155,8 +157,8 @@ primStringAppend [_, _] = throwError $ TypeMismatch "String"
 primStringAppend _ = throwError $ NumArgs "string-append: args == 2"
 
 primProcP :: PrimFunc
-primProcP [Evaled (Func _ _ _)] = return $ Const $ Bool True
-primProcP [_] = return $ Const $ Bool False
+primProcP [Evaled (Func _ _ _)] = bool True
+primProcP [_] = bool False
 primProcP _ = throwError $ NumArgs "procedure?: args == 1"
 
 primSymbolString :: PrimFunc
@@ -178,6 +180,22 @@ primNumberString _ = throwError $ NumArgs "number->string: args == 1"
 primStringNumber :: PrimFunc
 primStringNumber [Const (String s)] = case parseString parseNumber mempty s of
     Success c -> return $ Const c
-    Failure _ -> return $ Const $ Bool False
+    Failure _ -> bool False
 primStringNumber [_] = throwError $ TypeMismatch "String"
 primStringNumber _ = throwError $ NumArgs "string->number: args == 1"
+
+primEqualP :: PrimFunc
+primEqualP [e1, e2] = bool $ show e1 == show e2
+primEqualP _ = throwError $ NumArgs "equal?: args == 2"
+
+primEqP :: PrimFunc
+primEqP [Const (Bool p), Const (Bool q)] = bool $ p == q
+primEqP [Const (Number n), Const (Number m)] = bool $ n == m
+primEqP [Const Undefined, Const Undefined] = bool True
+primEqP [Ident i, Ident k] = bool $ i == k
+primEqP [Normalized (Prim p), Normalized (Prim q)] = bool $ p == q
+primEqP [_, _] = bool False
+primEqP _ = throwError $ NumArgs "eq?: args == 2"
+
+bool :: MonadScheme m => Bool -> SchemeT m Expr
+bool = return . Const . Bool
