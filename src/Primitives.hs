@@ -32,6 +32,7 @@ applyPrim StringP = primStringP
 applyPrim StringAppend = primStringAppend
 applyPrim SymbolString = primSymbolString
 applyPrim StringSymbol = primStringSymbol
+applyPrim NumberString = primNumberString
 applyPrim ProcP = primProcP
 
 primAdd :: PrimFunc
@@ -164,3 +165,8 @@ primStringSymbol :: PrimFunc
 primStringSymbol [Const (String s)] = return $ prim s
 primStringSymbol [_] = throwError $ TypeMismatch "String"
 primStringSymbol _ = throwError $ NumArgs "string->symbol: args == 1"
+
+primNumberString :: PrimFunc
+primNumberString [Const (Number n)] = return $ Const $ String $ show n
+primNumberString [_] = throwError $ TypeMismatch "Number"
+primNumberString _ = throwError $ NumArgs "number->string: args == 1"
