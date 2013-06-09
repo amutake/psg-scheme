@@ -14,3 +14,13 @@
   (lambda (args . body)
     (cons (append (cons 'lambda (cons (map car args) ())) body)
           (map cadr args))))
+
+(define-macro and
+  (lambda args
+    (if (null? args)
+        #t
+        (if (null? (cdr args))
+            (car args)
+            (append (append (cons 'if (list (car args)))
+                            (list (cons 'and (cdr args))))
+                    '(#f))))))
