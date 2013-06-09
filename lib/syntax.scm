@@ -24,3 +24,13 @@
             (append (append (cons 'if (list (car args)))
                             (list (cons 'and (cdr args))))
                     '(#f))))))
+
+(define-macro or
+  (lambda args
+    (if (null? args)
+        #f
+        (if (null? (cdr args))
+            (car args)
+            (append (append (cons 'if (list (car args)))
+                            (list (car args)))
+                    (list (cons 'or (cdr args))))))))
