@@ -90,7 +90,8 @@ evalList ref (f : es) = do
 evalList _ [] = return $ List nil
 
 apply :: MonadScheme m => EnvRef -> Expr -> [Expr] -> SchemeT m Expr
-apply _ (Normalized (Prim f)) es = applyPrim f es
+apply ref (Normalized (Prim f)) (cc:es) =
+    applyPrim f es >>= eval ref . List . ProperList . two cc . List . ProperList . two (Ident "quote")
 apply _ (Evaled (Func args body closure)) es = do
     ref <- newIORef $ Extended empty closure
     defines ref args es
