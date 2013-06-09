@@ -27,18 +27,14 @@ cpsList [Ident "lambda", List args, e] cc = do
     e' <- cpsExpr e $ Ident var
     return $ list [cc, listIdent "lambda" [List $ cons (Ident var) args, e']]
 cpsList [Ident "call/cc", e] cc = do
-    return $ list [cc, list [e, cc]]
-
-    -- var <- getVar
-    -- n <- get
-    -- let (cc', n') = runState (cpsExpr cc $ listIdent "lambda" [list [Ident var], Ident var]) $ succ n
-    -- put n'
-    -- e' <- cpsExpr e cc
-    -- return $ list [e', cc, cc']
+    cpsExpr (list [e, cc]) cc
 cpsList [Ident "quote", e] cc = return $ list [cc, listIdent "quote" [e]]
 cpsList ((Ident "begin") : e : es) cc = do
     var <- getVar
-    e' <- cpsExpr (List $ ProperList $ (Ident "begin") : es) cc
+    let es' | es == [] = List $ ProperList []
+            | length es == 1 = head es
+            | otherwise = List $ ProperList $ (Ident "begin") : es
+    e' <- cpsExpr es' cc
     cpsExpr e $ listIdent "lambda" [list [Ident var], e']
 cpsList [Ident "set!", v, e] cc = do
     var <- getVar

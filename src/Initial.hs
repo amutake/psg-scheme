@@ -3,6 +3,7 @@
 
 module Initial where
 
+import Control.Applicative ((<$>))
 import Control.Monad.Error (runErrorT)
 import Control.Monad.State (execStateT)
 import Data.Map (Map, fromList, empty)
@@ -20,8 +21,13 @@ primitives = fromList
     ]
 
 initialLoad :: EnvRef -> IO Macro
-initialLoad ref = execStateT (runErrorT $ runSchemeT $ scheme ref loadStr) empty
+initialLoad ref = do
+    last <$> mapM exec loadStr
   where
-    loadStr = concat $ map (\s -> "(load \"" ++ s ++ "\")")
-        [
+    exec str = execStateT (runErrorT $ runSchemeT $ scheme ref str) empty
+    loadStr = map (\s -> "(load \"" ++ s ++ "\")")
+        [ "lib/shiftreset.scm"
+        , "lib/shift.scm"
+        , "lib/reset.scm"
+        , "lib/test.scm"
         ]
