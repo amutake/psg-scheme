@@ -108,11 +108,10 @@ primEqv xs
 primCar :: PrimFunc
 primCar [List (ProperList (x : _))] = return x
 primCar [List (DottedList (x : _) _)] = return $ x
-primCar [_] = throwError $ TypeMismatch "pair"
+primCar [_] = throwError $ TypeMismatch "Pair"
 primCar _ = throwError $ NumArgs "car: args == 1"
 
 primCdr :: PrimFunc
-primCdr [List (ProperList [])] = return $ List nil
 primCdr [List (ProperList (_ : xs))] = return $ List $ ProperList xs
 primCdr [List (DottedList [_] x)] = return x
 primCdr [List (DottedList (_ : xs) x)] = return $ List $ DottedList xs x

@@ -22,7 +22,7 @@ import qualified Data.Map as M
 
 import Env
 import Primitives
-import Conversion.Normalize (normalize)
+import Conversion.Normalize (normalize, flattenList)
 import Parser (parse)
 import Types.Core
 import Types.Exception
@@ -70,6 +70,21 @@ evalList ref [Ident "unquote", e] = eval ref e
 evalList ref [Ident "unquote-splicing", e] = eval ref e
 evalList ref ((Ident "begin") : es) = mapM (eval ref) (init es) >> eval ref (last es)
 evalList ref [Ident "set!", Ident v, e] = eval ref e >>= setVar ref v
+evalList ref [Ident "set-car!", Ident v, e] = do
+    v' <- lookupEnv ref v
+    e' <- eval ref e
+    case v' of
+        List (ProperList (_ : es)) -> setVar ref v $ flattenList $ List $ ProperList $ e' : es
+        List (DottedList (_ : es) e'') -> setVar ref v $ flattenList $ List $ DottedList (e' : es) e''
+        _ -> throwError $ TypeMismatch "Pair"
+evalList ref [Ident "set-cdr!", Ident v, e] = do
+    v' <- lookupEnv ref v
+    e' <- eval ref e
+    case v' of
+        List (ProperList (e'' : _)) -> setVar ref v $ flattenList $ List $ DottedList [e''] e'
+        List (DottedList [e''] _) -> setVar ref v $ flattenList $ List $ DottedList [e''] e'
+        List (DottedList (e'' : _) _) -> setVar ref v $ flattenList $ List $ DottedList [e''] e'
+        _ -> throwError $ TypeMismatch "Pair"
 evalList ref [Ident "if", b, t, f] = do
     b' <- eval ref b
     case b' of
