@@ -71,6 +71,8 @@ data Prim
     | Mul
     | Div
     | Equal
+    | NLT
+    | NGT
     | Eqv
     | Car
     | Cdr
@@ -84,6 +86,8 @@ instance Show Prim where
     show Mul = "*"
     show Div = "/"
     show Equal = "="
+    show NLT = "<"
+    show NGT = ">"
     show Eqv = "eqv?"
     show Car = "car"
     show Cdr = "cdr"

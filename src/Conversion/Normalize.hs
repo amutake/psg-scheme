@@ -112,6 +112,8 @@ prim "-" = Normalized $ Prim Sub
 prim "*" = Normalized $ Prim Mul
 prim "/" = Normalized $ Prim Div
 prim "=" = Normalized $ Prim Equal
+prim "<" = Normalized $ Prim NLT
+prim ">" = Normalized $ Prim NGT
 prim "eqv?" = Normalized $ Prim Eqv
 prim "car" = Normalized $ Prim Car
 prim "cdr" = Normalized $ Prim Cdr

@@ -135,18 +135,6 @@ apply _ (Evaled (Func args body closure)) es = do
     eval ref body
 apply _ e _ = throwError $ NotFunction $ show e
 
-applyPrim :: MonadScheme m => Prim -> [Expr] -> SchemeT m Expr
-applyPrim Add = primAdd
-applyPrim Sub = primSub
-applyPrim Mul = primMul
-applyPrim Div = primDiv
-applyPrim Equal = primEqual
-applyPrim Eqv = primEqv
-applyPrim Car = primCar
-applyPrim Cdr = primCdr
-applyPrim Cons = primCons
-applyPrim Pair = primPair
-
 load :: MonadScheme m => EnvRef -> FilePath -> SchemeT m Expr
 load ref path = do
     result <- liftIO $ try $ readFile path
