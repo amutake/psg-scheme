@@ -124,5 +124,6 @@ prim "symbol?" = Normalized $ Prim SymbolP
 prim "boolean?" = Normalized $ Prim BooleanP
 prim "string?" = Normalized $ Prim StringP
 prim "string-append" = Normalized $ Prim StringAppend
+prim "symbol->string" = Normalized $ Prim SymbolString
 prim "procedure?" = Normalized $ Prim ProcP
 prim v = Ident v

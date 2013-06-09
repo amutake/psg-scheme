@@ -83,6 +83,7 @@ data Prim
     | BooleanP
     | StringP
     | StringAppend
+    | SymbolString
     | ProcP
     deriving (Eq)
 
@@ -104,6 +105,7 @@ instance Show Prim where
     show BooleanP = "boolean?"
     show StringP = "string?"
     show StringAppend = "string-append"
+    show SymbolString = "symbol->string"
     show ProcP = "procedure?"
 
 data Evaled
