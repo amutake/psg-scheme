@@ -36,3 +36,8 @@
 
 (define (>= . xs)
   (helper-compare '> xs))
+
+(define (length xs)
+  (if (null? xs)
+      0
+      (+ 1 (length (cdr xs)))))
