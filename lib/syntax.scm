@@ -53,3 +53,16 @@
       `(let ,(map (lambda (x) `(,x 'undefined)) vars)
          ,@(map-2 (lambda (x y) `(set! ,x ,y)) vars vals)
          ,@body))))
+
+(define-macro cond
+  (lambda args
+    (if (null? args)
+        'undefined
+        (if (eqv? (caar args) 'else)
+            `(begin ,@(cdar args))
+            (if (null? (cdar args))
+                `(let ((+value+ ,(caar args)))
+                   (if +value+ +value+ (cond ,@(cdr args))))
+                `(if ,(caar args)
+                     (begin ,@(cdar args))
+                     (cond ,@(cdr args))))))))

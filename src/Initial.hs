@@ -24,4 +24,5 @@ initialLoad ref = execStateT (runErrorT $ runSchemeT $ scheme ref loadStr) empty
     loadStr = concat $ map (\s -> "(load \"" ++ s ++ "\")")
         [ "lib/syntax.scm"
         , "lib/util.scm"
+        , "lib/test.scm"
         ]
