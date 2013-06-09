@@ -37,13 +37,6 @@ normalizeList (ProperList ((Ident "define"):(List vars):body)) = do
     construct "define" [Ident var, l]
 normalizeList (ProperList ((Ident "define"):_)) =
     throwError $ SyntaxError "define"
-normalizeList (ProperList ((Ident "define-macro"):(Ident var):[expr])) = do
-    e <- normalizeExpr expr
-    construct "define-macro" [Ident var, e]
-normalizeList (ProperList ((Ident "define-macro"):(List vars):body)) = do
-    (var, args) <- splitArgs vars
-    l <- lambdaBody (List $ fmap Ident args) body
-    construct "define-macro" [Ident var, l]
 normalizeList (ProperList ((Ident "lambda"):(Ident args):body)) = do
     let args' = List $ DottedList [] $ Ident args
     lambdaBody args' body
@@ -53,9 +46,6 @@ normalizeList (ProperList ((Ident "lambda"):(List args):body)) = do
 normalizeList (ProperList ((Ident "lambda"):_)) =
     throwError $ SyntaxError "lambda"
 normalizeList (ProperList [Ident "begin"]) = return $ Const Undefined
-normalizeList (ProperList [Ident "begin", List (ProperList [Ident "unquote-splicing", e])]) = do
-    e' <- normalizeExpr e
-    construct "begin" [List $ ProperList [Ident "unquote-splicing", e']]
 normalizeList (ProperList [Ident "begin", e]) = normalizeExpr e
 normalizeList (ProperList ((Ident "begin"):es)) = do
     es' <- mapM normalizeExpr es
@@ -63,8 +53,8 @@ normalizeList (ProperList ((Ident "begin"):es)) = do
 normalizeList (ProperList [Ident "set!", Ident var, e]) = do
     e' <- normalizeExpr e
     construct "set!" [Ident var, e']
--- normalizeList (ProperList ((Ident "set!"):_)) =
---     throwError $ SyntaxError "set!"
+normalizeList (ProperList ((Ident "set!"):_)) =
+    throwError $ SyntaxError "set!"
 normalizeList (ProperList [Ident "if", b, t, f]) = do
     b' <- normalizeExpr b
     t' <- normalizeExpr t

@@ -22,24 +22,20 @@ cpsList [Ident "define", v, e] cc = do
     var <- getVar
     e' <- cpsExpr e $ listIdent "lambda" [list [Ident var], Ident var]
     return $ list [cc, listIdent "define" [v, e']]
-cpsList [Ident "define-macro", v, e] cc = do
-    var <- getVar
-    e' <- cpsExpr e $ listIdent "lambda" [list [Ident var], Ident var]
-    return $ list [cc, listIdent "define-macro" [v, e']]
 cpsList [Ident "lambda", List args, e] cc = do
     var <- getVar
     e' <- cpsExpr e $ Ident var
     return $ list [cc, listIdent "lambda" [List $ cons (Ident var) args, e']]
 cpsList [Ident "call/cc", e] cc = do
-    var <- getVar
-    n <- get
-    let (cc', n') = runState (cpsExpr cc $ listIdent "lambda" [list [Ident var], Ident var]) $ succ n
-    put n'
-    return $ list [cc, list [e, cc']]
+    return $ list [cc, list [e, cc]]
+
+    -- var <- getVar
+    -- n <- get
+    -- let (cc', n') = runState (cpsExpr cc $ listIdent "lambda" [list [Ident var], Ident var]) $ succ n
+    -- put n'
+    -- e' <- cpsExpr e cc
+    -- return $ list [e', cc, cc']
 cpsList [Ident "quote", e] cc = return $ list [cc, listIdent "quote" [e]]
-cpsList [Ident "quasiquote", e] cc = return $ list [cc, listIdent "quasiquote" [e]]
-cpsList [Ident "unquote", e] cc = return $ list [cc, listIdent "unquote" [e]]
-cpsList [Ident "unquote-splicing", e] cc = return $ list [cc, listIdent "unquote-splicing" [e]]
 cpsList ((Ident "begin") : e : es) cc = do
     var <- getVar
     e' <- cpsExpr (List $ ProperList $ (Ident "begin") : es) cc
@@ -53,6 +49,14 @@ cpsList [Ident "if", b, t, f] cc = do
     f' <- cpsExpr f cc
     cpsExpr b $ listIdent "lambda" [list [Ident var], listIdent "if" [Ident var, t', f']]
 cpsList [Ident "load", path] cc = return $ list [cc, listIdent "load" [path]]
+cpsList (p@(Normalized (Prim _)) : args) cc = do
+    vars <- getVars $ length args
+    go cc vars $ zip vars args
+  where
+    go c vars' [] = return $ list [c, list (p : map Ident vars')]
+    go c vars' ((var, arg) : args') = do
+        e <- go c vars' args'
+        cpsExpr arg $ listIdent "lambda" [list [Ident var], e]
 cpsList [] cc = return $ list [cc, list []]
 cpsList (f : args) cc = do
     (fvar : vars) <- getVars $ length (f : args)

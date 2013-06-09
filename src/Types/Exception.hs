@@ -17,6 +17,7 @@ data SchemeException
     | TypeMismatch String
     | SyntaxError String
     | IOError IOError
+    | Break Expr
     | Exit
     deriving (Show, Typeable)
 

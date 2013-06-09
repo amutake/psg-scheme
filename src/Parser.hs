@@ -27,9 +27,6 @@ parseExpr = between blank blank $
     parseConst <|>
     parseList <|>
     parseQuote <|>
-    parseQuasiQuote <|>
-    parseUnquoteSplicing <|>
-    parseUnquote <|>
     parseIdent
 
 parseConst :: Parser Expr
