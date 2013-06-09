@@ -4,7 +4,10 @@ module Primitives where
 
 import Control.Monad (foldM)
 import Control.Monad.Error (MonadError (..))
+import Data.Monoid (mempty)
+import Text.Trifecta (parseString, Result (..))
 
+import Parser (parseNumber)
 import Types.Core
 import Types.Exception
 import Types.Syntax
@@ -33,6 +36,7 @@ applyPrim StringAppend = primStringAppend
 applyPrim SymbolString = primSymbolString
 applyPrim StringSymbol = primStringSymbol
 applyPrim NumberString = primNumberString
+applyPrim StringNumber = primStringNumber
 applyPrim ProcP = primProcP
 
 primAdd :: PrimFunc
@@ -170,3 +174,10 @@ primNumberString :: PrimFunc
 primNumberString [Const (Number n)] = return $ Const $ String $ show n
 primNumberString [_] = throwError $ TypeMismatch "Number"
 primNumberString _ = throwError $ NumArgs "number->string: args == 1"
+
+primStringNumber :: PrimFunc
+primStringNumber [Const (String s)] = case parseString parseNumber mempty s of
+    Success c -> return $ Const c
+    Failure _ -> return $ Const $ Bool False
+primStringNumber [_] = throwError $ TypeMismatch "String"
+primStringNumber _ = throwError $ NumArgs "string->number: args == 1"
