@@ -41,3 +41,8 @@
   (if (null? xs)
       0
       (+ 1 (length (cdr xs)))))
+
+(define (last xs)
+  (cond ((null? xs) 'undefined)
+        ((null? (cdr xs)) (car xs))
+        (else (last (cdr xs)))))
