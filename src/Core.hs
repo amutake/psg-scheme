@@ -75,21 +75,9 @@ evalList ref [Ident "load", e] = do
 evalList ref (f : es) = do
     f' <- eval ref f
     es' <- mapM (eval ref) es
-#ifdef DEBUG
-    liftIO $ putStrLn $ ("  apply-before: " ++) $ show $ List $ ProperList (f : es)
-    liftIO $ putStrLn $ ("  fun-args-eval: " ++) $ show $ List $ ProperList (f' : es')
-    -- env <- readIORef ref
-    -- liftIO $ putStrLn $ show env
-#endif
     case f' of
         Evaled Return -> throwError $ Break $ last es'
-        _ -> do
-            e' <- apply ref f' es'
-#ifdef DEBUG
-            liftIO $ putStrLn $ ("  apply-result: " ++) $ show e'
-            liftIO $ putStrLn ""
-#endif
-            return e'
+        _ -> apply ref f' es'
 evalList _ [] = return $ List nil
 
 apply :: MonadScheme m => EnvRef -> Expr -> [Expr] -> SchemeT m Expr
