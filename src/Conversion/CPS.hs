@@ -22,6 +22,10 @@ cpsList [Ident "define", v, e] cc = do
     var <- getVar
     e' <- cpsExpr e $ listIdent "lambda" [list [Ident var], Ident var] : cc
     return $ list [head cc, listIdent "define" [v, e']]
+cpsList [Ident "define-macro", v, e] cc = do
+    var <- getVar
+    e' <- cpsExpr e $ listIdent "lambda" [list [Ident var], Ident var] : cc
+    return $ list [head cc, listIdent "define-macro" [v, e']]
 cpsList [Ident "lambda", List args, e] cc = do
     var <- getVar
     e' <- cpsExpr e $ Ident var : cc
