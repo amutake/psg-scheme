@@ -14,3 +14,10 @@
       (iter ls '()))))
 
 (define (list . xs) xs)
+
+(define (list? xs)
+  (if (null? xs)
+      #t
+      (if (pair? xs)
+          (list? (cdr xs))
+          #f)))
