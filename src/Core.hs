@@ -8,7 +8,6 @@ import Control.Exception (try)
 #else
 import Control.Monad ((>=>))
 #endif
-import Control.Monad.Base (MonadBase)
 import Control.Monad.Error (MonadError (..))
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.State (MonadState (..))
@@ -106,13 +105,8 @@ evalList ref (f : es) = do
 #endif
     case f' of
         Evaled Return -> return $ last es'
-        _ -> do
-            e' <- apply ref f' es'
-#ifdef DEBUG
-            liftIO $ putStrLn $ ("  apply-result: " ++) $ show e'
-            liftIO $ putStrLn ""
-#endif
-            return e'
+        _ -> apply ref f' es'
+
 evalList _ [] = return $ List nil
 
 evalQuasiQuote :: MonadScheme m => EnvRef -> Expr -> SchemeT m Expr
