@@ -31,6 +31,7 @@ applyPrim BooleanP = primBooleanP
 applyPrim StringP = primStringP
 applyPrim StringAppend = primStringAppend
 applyPrim SymbolString = primSymbolString
+applyPrim StringSymbol = primStringSymbol
 applyPrim ProcP = primProcP
 
 primAdd :: PrimFunc
@@ -157,4 +158,9 @@ primSymbolString :: PrimFunc
 primSymbolString [Ident i] = return $ Const $ String i
 primSymbolString [Normalized (Prim p)] = return $ Const $ String $ show p
 primSymbolString [_] = throwError $ TypeMismatch "Symbol"
-primSymbolString _ = throwError $ NumArgs "procedure?: args == 1"
+primSymbolString _ = throwError $ NumArgs "symbol->string: args == 1"
+
+primStringSymbol :: PrimFunc
+primStringSymbol [Const (String s)] = return $ prim s
+primStringSymbol [_] = throwError $ TypeMismatch "String"
+primStringSymbol _ = throwError $ NumArgs "string->symbol: args == 1"

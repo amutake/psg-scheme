@@ -84,6 +84,7 @@ data Prim
     | StringP
     | StringAppend
     | SymbolString
+    | StringSymbol
     | ProcP
     deriving (Eq)
 
@@ -106,7 +107,31 @@ instance Show Prim where
     show StringP = "string?"
     show StringAppend = "string-append"
     show SymbolString = "symbol->string"
+    show StringSymbol = "string->symbol"
     show ProcP = "procedure?"
+
+prim :: Ident -> Expr
+prim "+" = Normalized $ Prim Add
+prim "-" = Normalized $ Prim Sub
+prim "*" = Normalized $ Prim Mul
+prim "/" = Normalized $ Prim Div
+prim "=" = Normalized $ Prim Equal
+prim "<" = Normalized $ Prim NLT
+prim ">" = Normalized $ Prim NGT
+prim "eqv?" = Normalized $ Prim Eqv
+prim "car" = Normalized $ Prim Car
+prim "cdr" = Normalized $ Prim Cdr
+prim "cons" = Normalized $ Prim Cons
+prim "pair?" = Normalized $ Prim Pair
+prim "number?" = Normalized $ Prim NumberP
+prim "symbol?" = Normalized $ Prim SymbolP
+prim "boolean?" = Normalized $ Prim BooleanP
+prim "string?" = Normalized $ Prim StringP
+prim "string-append" = Normalized $ Prim StringAppend
+prim "symbol->string" = Normalized $ Prim SymbolString
+prim "string->symbol" = Normalized $ Prim StringSymbol
+prim "procedure?" = Normalized $ Prim ProcP
+prim v = Ident v
 
 data Evaled
     = Func (List Ident) Expr EnvRef
