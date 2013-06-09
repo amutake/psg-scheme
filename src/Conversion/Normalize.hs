@@ -120,4 +120,5 @@ prim "cdr" = Normalized $ Prim Cdr
 prim "cons" = Normalized $ Prim Cons
 prim "pair?" = Normalized $ Prim Pair
 prim "number?" = Normalized $ Prim NumberP
+prim "symbol?" = Normalized $ Prim SymbolP
 prim v = Ident v

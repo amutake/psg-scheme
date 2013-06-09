@@ -26,6 +26,7 @@ applyPrim Cdr = primCdr
 applyPrim Cons = primCons
 applyPrim Pair = primPair
 applyPrim NumberP = primNumberP
+applyPrim SymbolP = primSymbolP
 
 primAdd :: PrimFunc
 primAdd = foldM add (Const $ Number 0)
@@ -120,3 +121,9 @@ primPair _ = throwError $ NumArgs "pair?: args == 1"
 primNumberP :: PrimFunc
 primNumberP [n] = return $ Const $ Bool $ isNumber n
 primNumberP _ = throwError $ NumArgs "number?: args == 1"
+
+primSymbolP :: PrimFunc
+primSymbolP [Ident _] = return $ Const $ Bool True
+primSymbolP [Normalized (Prim _)] = return $ Const $ Bool True
+primSymbolP [_] = return $ Const $ Bool False
+primSymbolP _ = throwError $ NumArgs "symbol?: args == 1"

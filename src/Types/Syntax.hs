@@ -79,6 +79,7 @@ data Prim
     | Cons
     | Pair
     | NumberP
+    | SymbolP
     deriving (Eq)
 
 instance Show Prim where
@@ -95,6 +96,7 @@ instance Show Prim where
     show Cons = "cons"
     show Pair = "pair?"
     show NumberP = "number?"
+    show SymbolP = "symbol?"
 
 data Evaled
     = Func (List Ident) Expr EnvRef
