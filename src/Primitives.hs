@@ -25,6 +25,7 @@ applyPrim Car = primCar
 applyPrim Cdr = primCdr
 applyPrim Cons = primCons
 applyPrim Pair = primPair
+applyPrim NumberP = primNumberP
 
 primAdd :: PrimFunc
 primAdd = foldM add (Const $ Number 0)
@@ -115,3 +116,7 @@ primPair :: PrimFunc
 primPair [List _] = return $ Const $ Bool True
 primPair [_] = return $ Const $ Bool False
 primPair _ = throwError $ NumArgs "pair?: args == 1"
+
+primNumberP :: PrimFunc
+primNumberP [n] = return $ Const $ Bool $ isNumber n
+primNumberP _ = throwError $ NumArgs "number?: args == 1"
