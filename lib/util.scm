@@ -21,3 +21,18 @@
       (if (pair? xs)
           (list? (cdr xs))
           #f)))
+
+(define (helper-compare f xs)
+  (if (or (null? xs) (null? (cdr xs)))
+      'undefined
+      (let ((n (car xs)) (m (cadr xs)))
+        (if (null? (cddr xs))
+          (or (= n m) (f n m))
+          (and (or (= n m) (f n m))
+               (helper-compare f (cdr xs)))))))
+
+(define (<= . xs)
+  (helper-compare '< xs))
+
+(define (>= . xs)
+  (helper-compare '> xs))
