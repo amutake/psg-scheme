@@ -11,3 +11,9 @@
           ((eqv? x 'b) 2)
           ((eqv? x 'c) 3)
           (else 0))))
+
+(define reverse-do
+  (lambda (xs)
+    (do ((ls xs (cdr ls)) (result '()))
+        ((null? ls) result)
+      (set! result (cons (car ls) result)))))

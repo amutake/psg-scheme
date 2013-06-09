@@ -66,3 +66,19 @@
                 `(if ,(caar args)
                      (begin ,@(cdar args))
                      (cond ,@(cdr args))))))))
+
+(define-macro do
+  (lambda (var-form test-form . args)
+    (let ((vars (map car var-form))
+          (vals (map cadr var-form))
+          (step (map cddr var-form)))
+      `(letrec ((loop (lambda ,vars
+                        (if ,(car test-form)
+                            (begin ,@(cdr test-form))
+                            (begin
+                              ,@args
+                              (loop ,@(map-2 (lambda (x y)
+                                               (if (null? x) y (car x)))
+                                             step
+                                             vars)))))))
+         (loop ,@vals)))))
