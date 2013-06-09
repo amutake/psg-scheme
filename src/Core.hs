@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, CPP, ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts, CPP, ConstraintKinds, ScopedTypeVariables #-}
 
 module Core where
 
@@ -32,12 +32,16 @@ scheme ref s = do
         liftIO $ putStrLn $ "normalize: " ++ show ae
         let ce = cps ae
         liftIO $ putStrLn $ "cps: " ++ show ce
-        eval ref ce
+        catchError (eval ref ce) catchBreak
         ) bes
 #else
 scheme :: MonadScheme m => EnvRef -> String -> SchemeT m [Expr]
-scheme ref = parse >=> mapM (normalize >=> eval ref . cps)
+scheme ref = parse >=> mapM (normalize >=> flip catchError catchBreak . eval ref . cps)
 #endif
+
+catchBreak :: MonadScheme m => SchemeException -> SchemeT m Expr
+catchBreak (Break e) = return e
+catchBreak e = throwError e
 
 ----------------
 -- eval
