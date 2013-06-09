@@ -61,7 +61,6 @@ evalList ref [Ident "lambda", List args, body] = do
     args' <- extractIdents args
     return $ Evaled $ Func args' body ref
 evalList _ [Ident "quote", e] = return e
-evalList ref ((Ident "begin") : es) = mapM (eval ref) (init es) >> eval ref (last es)
 evalList ref [Ident "set!", Ident v, e] = eval ref e >>= setVar ref v
 evalList ref [Ident "if", b, t, f] = do
     b' <- eval ref b
