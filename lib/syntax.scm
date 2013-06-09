@@ -34,3 +34,11 @@
             (append (append (cons 'if (list (car args)))
                             (list (car args)))
                     (list (cons 'or (cdr args))))))))
+
+(define-macro let*
+  (lambda (args . body)
+    (if (null? (cdr args))
+        (append (cons 'let (list (list (car args)))) body)
+        (append (cons 'let (list (list (car args))))
+                (list (append (cons 'let* (list (cdr args)))
+                              body))))))
