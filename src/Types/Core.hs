@@ -53,4 +53,4 @@ instance MonadBaseControl base m => MonadBaseControl base (SchemeT m) where
     liftBaseWith = defaultLiftBaseWith StMSchemeT
     restoreM = defaultRestoreM unStMSchemeT
 
-type MonadScheme m = (Functor m, Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m)
+type MonadScheme m = (Functor m, Monad m, MonadIO m, MonadBase IO m)
