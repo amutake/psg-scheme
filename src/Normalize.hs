@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts, ConstraintKinds #-}
 
-module Conversion.Normalize where
+module Normalize where
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad.Error (throwError)

@@ -15,11 +15,11 @@ import Data.IORef.Lifted (newIORef)
 import Data.Map (empty)
 import qualified Data.Map as M
 
+import CPS (cps)
 import Env
-import Primitives
-import Conversion.CPS (cps)
-import Conversion.Normalize (normalize)
+import Normalize (normalize)
 import Parser (parse)
+import Primitives
 import Types.Core
 import Types.Exception
 import Types.Syntax

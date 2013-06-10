@@ -1,4 +1,4 @@
-module Conversion.CPS where
+module CPS where
 
 import Control.Monad
 import Control.Monad.State
