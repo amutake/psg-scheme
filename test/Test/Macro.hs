@@ -8,6 +8,7 @@ runMacroTests :: IO ()
 runMacroTests = hspec $ do
     letTest
     andTest
+    orTest
     letStarTest
 
 letTest :: Spec
@@ -23,6 +24,13 @@ andTest = do
             testScheme "(and 1 2 3 4)" `shouldReturn` ["4"]
             testScheme "(and #f 1 2)" `shouldReturn` ["#f"]
             testScheme "(and 1 2 3 #f)" `shouldReturn` ["#f"]
+
+orTest :: Spec
+orTest = do
+    describe "or" $ do
+        it "works" $ do
+            testScheme "(or #f #f #f)" `shouldReturn` ["#f"]
+            testScheme "(or #f #f 1 2 3)" `shouldReturn` ["1"]
 
 letStarTest :: Spec
 letStarTest = do
