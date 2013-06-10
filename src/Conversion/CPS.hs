@@ -34,12 +34,15 @@ cpsList [Ident "call/cc", f] cc = do
     var <- getVar
     dummy <- getVar
     result <- getVar
-    cpsExpr f $ listIdent "lambda" [list [Ident var], list [Ident var, head cc, listIdent "lambda" [List $ ProperList [Ident dummy, Ident result], List $ ProperList [head cc, Ident result]]]] : tail cc
+    cpsExpr f $ listIdent "lambda" [list [Ident var], list [Ident var, head cc, listIdent "lambda" [list [Ident dummy, Ident result], list [head cc, Ident result]]]] : tail cc
 cpsList [Ident "reset", e] cc = do
     var <- getVar
     cpsExpr e $ listIdent "lambda" [list [Ident var], Ident var] : cc
-cpsList [Ident "shift", e] cc = do
-    cpsExpr (list [e, head cc]) $ tail cc
+cpsList [Ident "shift", f] cc = do
+    var <- getVar
+    gc <- getVar
+    result <- getVar
+    cpsExpr f $ listIdent "lambda" [list [Ident var], list [Ident var, cc !! 1, listIdent "lambda" [list [Ident gc, Ident result], list [Ident gc, list [head cc, Ident result]]]]] : tail (tail cc)
 cpsList [Ident "quote", e] cc = return $ list [head cc, listIdent "quote" [e]]
 cpsList ((Ident "begin") : e : es) cc = do
     var <- getVar
