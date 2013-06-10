@@ -25,7 +25,8 @@ normalizeExpr c@(Const _) = return c
 normalizeExpr (Ident i) = return $ prim i
 normalizeExpr (List l) = normalizeList l
 normalizeExpr p@(Prim _) = return p
-normalizeExpr e@(Evaled _) = return e
+normalizeExpr f@(Func _ _ _) = return f
+normalizeExpr Return = return Return
 
 normalizeList :: MonadScheme m => List Expr -> SchemeT m Expr
 normalizeList (ProperList [Ident "define", Ident var, expr]) = do

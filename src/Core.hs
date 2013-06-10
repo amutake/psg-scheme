@@ -58,14 +58,15 @@ eval ref (Ident i) = lookupEnv ref i
 eval ref (List (ProperList es)) = evalList ref es
 eval _ (List (DottedList _ _)) = throwError $ SyntaxError "dotted list"
 eval _ p@(Prim _) = return p
-eval _ e@(Evaled _) = return e
+eval _ f@(Func _ _ _) = return f
+eval _ Return = return Return
 
 evalList :: MonadScheme m => EnvRef -> [Expr] -> SchemeT m Expr
 evalList ref [Ident "define", Ident v, e] = eval ref e >>= define ref v
 evalList ref [Ident "define-macro", Ident v, e] = eval ref e >>= putMacro v
 evalList ref [Ident "lambda", List args, body] = do
     args' <- extractIdents args
-    return $ Evaled $ Func args' body ref
+    return $ Func args' body ref
 evalList _ [Ident "quote", e] = return e
 evalList ref [Ident "set!", Ident v, e] = eval ref e >>= setVar ref v
 evalList ref [Ident "if", b, t, f] = do
@@ -85,14 +86,14 @@ evalList ref (f : es) = do
     liftIO $ putStrLn $ show $ f' : es'
 #endif
     case f' of
-        Evaled Return -> throwError $ Break $ last es'
+        Return -> throwError $ Break $ last es'
         _ -> apply ref f' es'
 evalList _ [] = return $ List nil
 
 apply :: MonadScheme m => EnvRef -> Expr -> [Expr] -> SchemeT m Expr
 apply ref (Prim f) (cc:es) =
     applyPrim f es >>= eval ref . List . ProperList . two cc . List . ProperList . two (Ident "quote")
-apply _ (Evaled (Func args body closure)) es = do
+apply _ (Func args body closure) es = do
     ref <- newIORef $ Extended empty closure
     defines ref args es
     eval ref body
@@ -107,7 +108,7 @@ load ref path = do
             (\err -> liftIO (print err) >> return (Const $ Bool False))
 
 putMacro :: MonadScheme m => Ident -> Expr -> SchemeT m Expr
-putMacro var (Evaled (Func args expr ref)) = do
+putMacro var (Func args expr ref) = do
       mac <- get
       put $ M.insert var (MacroBody args expr ref) mac
       return $ Ident var
@@ -119,7 +120,8 @@ macro i@(Ident _) = return i
 macro (List (ProperList es)) = macroList es
 macro (List (DottedList es e)) = List <$> (DottedList <$> mapM macro es <*> macro e)
 macro p@(Prim _) = return p
-macro e@(Evaled _) = return e
+macro f@(Func _ _ _) = return f
+macro Return = return Return
 
 macroList :: MonadScheme m => [Expr] -> SchemeT m Expr
 macroList [] = return $ List nil

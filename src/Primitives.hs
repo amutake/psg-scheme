@@ -156,7 +156,7 @@ primStringAppend [_, _] = throwError $ TypeMismatch "String"
 primStringAppend _ = throwError $ NumArgs "string-append: args == 2"
 
 primProcP :: PrimFunc
-primProcP [Evaled (Func _ _ _)] = bool True
+primProcP [Func _ _ _] = bool True
 primProcP [_] = bool False
 primProcP _ = throwError $ NumArgs "procedure?: args == 1"
 

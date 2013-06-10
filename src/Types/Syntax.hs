@@ -13,7 +13,8 @@ data Expr
     | Ident Ident
     | List (List Expr)
     | Prim Prim
-    | Evaled Evaled
+    | Func (List Ident) Expr EnvRef
+    | Return
     deriving (Eq)
 
 instance Show Expr where
@@ -21,7 +22,8 @@ instance Show Expr where
     show (Ident i) = i
     show (List l) = show l
     show (Prim p) = show p
-    show (Evaled e) = show e
+    show (Func args e _) = "(function " ++ show (Args args) ++ " " ++ show e ++ ")"
+    show Return = "#return"
 
 type Ident = String
 
@@ -139,15 +141,6 @@ prim "procedure?" = Prim ProcP
 prim "equal?" = Prim EqualP
 prim "eq?" = Prim EqP
 prim v = Ident v
-
-data Evaled
-    = Func (List Ident) Expr EnvRef
-    | Return
-    deriving (Eq)
-
-instance Show Evaled where
-    show (Func args expr _) = "(function " ++ show args ++ " " ++ show expr ++ ")"
-    show Return = "#return"
 
 newtype Args = Args (List Ident) deriving (Eq)
 

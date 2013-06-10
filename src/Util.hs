@@ -26,4 +26,4 @@ two :: a -> a -> [a]
 two a b = [a, b]
 
 idE :: EnvRef -> Ident -> Expr
-idE ref v = Evaled $ Func (ProperList [v]) (Ident v) ref
+idE ref v = Func (ProperList [v]) (Ident v) ref

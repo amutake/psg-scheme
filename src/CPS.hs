@@ -7,7 +7,7 @@ import Types.Syntax
 import Util
 
 cps :: Expr -> Expr
-cps e = evalState (cpsExpr e [Evaled Return]) 1
+cps e = evalState (cpsExpr e [Return]) 1
 
 cpsExpr :: Expr -> [CC] -> State Int Expr
 cpsExpr c@(Const _) cc = return $ list [head cc, c]
@@ -15,7 +15,8 @@ cpsExpr i@(Ident _) cc = return $ list [head cc, i]
 cpsExpr (List (ProperList es)) cc = cpsList es cc
 cpsExpr (List (DottedList es e)) cc = return $ list [head cc, List $ DottedList es e]
 cpsExpr p@(Prim _) cc = return $ list [head cc, p]
-cpsExpr e@(Evaled _) cc = return $ list [head cc, e]
+cpsExpr f@(Func _ _ _) cc = return $ list [head cc, f]
+cpsExpr Return cc = return $ list [head cc, Return]
 
 cpsList :: [Expr] -> [CC] -> State Int Expr
 cpsList [Ident "define", v, e] cc = do
