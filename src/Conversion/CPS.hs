@@ -30,8 +30,11 @@ cpsList [Ident "lambda", List args, e] cc = do
     var <- getVar
     e' <- cpsExpr e $ Ident var : cc
     return $ list [head cc, listIdent "lambda" [List $ cons (Ident var) args, e']]
-cpsList [Ident "call/cc", e] cc = do
-    cpsExpr (list [e, head cc]) cc
+cpsList [Ident "call/cc", f] cc = do
+    var <- getVar
+    dummy <- getVar
+    result <- getVar
+    cpsExpr f $ listIdent "lambda" [list [Ident var], list [Ident var, head cc, listIdent "lambda" [List $ ProperList [Ident dummy, Ident result], List $ ProperList [head cc, Ident result]]]] : tail cc
 cpsList [Ident "reset", e] cc = do
     var <- getVar
     cpsExpr e $ listIdent "lambda" [list [Ident var], Ident var] : cc
