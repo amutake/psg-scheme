@@ -57,7 +57,7 @@ eval _ c@(Const _) = return c
 eval ref (Ident i) = lookupEnv ref i
 eval ref (List (ProperList es)) = evalList ref es
 eval _ (List (DottedList _ _)) = throwError $ SyntaxError "dotted list"
-eval _ n@(Normalized _) = return n
+eval _ p@(Prim _) = return p
 eval _ e@(Evaled _) = return e
 
 evalList :: MonadScheme m => EnvRef -> [Expr] -> SchemeT m Expr
@@ -90,7 +90,7 @@ evalList ref (f : es) = do
 evalList _ [] = return $ List nil
 
 apply :: MonadScheme m => EnvRef -> Expr -> [Expr] -> SchemeT m Expr
-apply ref (Normalized (Prim f)) (cc:es) =
+apply ref (Prim f) (cc:es) =
     applyPrim f es >>= eval ref . List . ProperList . two cc . List . ProperList . two (Ident "quote")
 apply _ (Evaled (Func args body closure)) es = do
     ref <- newIORef $ Extended empty closure
@@ -118,7 +118,7 @@ macro c@(Const _) = return c
 macro i@(Ident _) = return i
 macro (List (ProperList es)) = macroList es
 macro (List (DottedList es e)) = List <$> (DottedList <$> mapM macro es <*> macro e)
-macro n@(Normalized _) = return n
+macro p@(Prim _) = return p
 macro e@(Evaled _) = return e
 
 macroList :: MonadScheme m => [Expr] -> SchemeT m Expr

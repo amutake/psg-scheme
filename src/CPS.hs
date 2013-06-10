@@ -14,7 +14,7 @@ cpsExpr c@(Const _) cc = return $ list [head cc, c]
 cpsExpr i@(Ident _) cc = return $ list [head cc, i]
 cpsExpr (List (ProperList es)) cc = cpsList es cc
 cpsExpr (List (DottedList es e)) cc = return $ list [head cc, List $ DottedList es e]
-cpsExpr n@(Normalized _) cc = return $ list [head cc, n]
+cpsExpr p@(Prim _) cc = return $ list [head cc, p]
 cpsExpr e@(Evaled _) cc = return $ list [head cc, e]
 
 cpsList :: [Expr] -> [CC] -> State Int Expr

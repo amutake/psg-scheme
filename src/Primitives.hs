@@ -136,7 +136,7 @@ primNumberP _ = throwError $ NumArgs "number?: args == 1"
 
 primSymbolP :: PrimFunc
 primSymbolP [Ident _] = bool True
-primSymbolP [Normalized (Prim _)] = bool True
+primSymbolP [Prim _] = bool True
 primSymbolP [_] = bool False
 primSymbolP _ = throwError $ NumArgs "symbol?: args == 1"
 
@@ -162,7 +162,7 @@ primProcP _ = throwError $ NumArgs "procedure?: args == 1"
 
 primSymbolString :: PrimFunc
 primSymbolString [Ident i] = return $ Const $ String i
-primSymbolString [Normalized (Prim p)] = return $ Const $ String $ show p
+primSymbolString [Prim p] = return $ Const $ String $ show p
 primSymbolString [_] = throwError $ TypeMismatch "Symbol"
 primSymbolString _ = throwError $ NumArgs "symbol->string: args == 1"
 
@@ -193,7 +193,7 @@ primEqP [Const (Number n), Const (Number m)] = bool $ n == m
 primEqP [Const Undefined, Const Undefined] = bool True
 primEqP [Ident i, Ident k] = bool $ i == k
 primEqP [List (ProperList []), List (ProperList [])] = bool True
-primEqP [Normalized (Prim p), Normalized (Prim q)] = bool $ p == q
+primEqP [Prim p, Prim q] = bool $ p == q
 primEqP [_, _] = bool False
 primEqP _ = throwError $ NumArgs "eq?: args == 2"
 

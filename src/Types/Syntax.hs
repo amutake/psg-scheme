@@ -12,7 +12,7 @@ data Expr
     = Const Const
     | Ident Ident
     | List (List Expr)
-    | Normalized Normalized
+    | Prim Prim
     | Evaled Evaled
     deriving (Eq)
 
@@ -20,7 +20,7 @@ instance Show Expr where
     show (Const c) = show c
     show (Ident i) = i
     show (List l) = show l
-    show (Normalized n) = show n
+    show (Prim p) = show p
     show (Evaled e) = show e
 
 type Ident = String
@@ -59,11 +59,6 @@ instance Foldable List where
 instance Traversable List where
     traverse f (ProperList xs) = ProperList <$> traverse f xs
     traverse f (DottedList xs x) = DottedList <$> traverse f xs <*> f x
-
-data Normalized = Prim Prim deriving (Eq)
-
-instance Show Normalized where
-    show (Prim p) = show p
 
 data Prim
     = Add
@@ -119,30 +114,30 @@ instance Show Prim where
     show EqP = "eq?"
 
 prim :: Ident -> Expr
-prim "+" = Normalized $ Prim Add
-prim "-" = Normalized $ Prim Sub
-prim "*" = Normalized $ Prim Mul
-prim "/" = Normalized $ Prim Div
-prim "=" = Normalized $ Prim Equal
-prim "<" = Normalized $ Prim NLT
-prim ">" = Normalized $ Prim NGT
-prim "eqv?" = Normalized $ Prim Eqv
-prim "car" = Normalized $ Prim Car
-prim "cdr" = Normalized $ Prim Cdr
-prim "cons" = Normalized $ Prim Cons
-prim "pair?" = Normalized $ Prim Pair
-prim "number?" = Normalized $ Prim NumberP
-prim "symbol?" = Normalized $ Prim SymbolP
-prim "boolean?" = Normalized $ Prim BooleanP
-prim "string?" = Normalized $ Prim StringP
-prim "string-append" = Normalized $ Prim StringAppend
-prim "symbol->string" = Normalized $ Prim SymbolString
-prim "string->symbol" = Normalized $ Prim StringSymbol
-prim "number->string" = Normalized $ Prim NumberString
-prim "string->number" = Normalized $ Prim StringNumber
-prim "procedure?" = Normalized $ Prim ProcP
-prim "equal?" = Normalized $ Prim EqualP
-prim "eq?" = Normalized $ Prim EqP
+prim "+" = Prim Add
+prim "-" = Prim Sub
+prim "*" = Prim Mul
+prim "/" = Prim Div
+prim "=" = Prim Equal
+prim "<" = Prim NLT
+prim ">" = Prim NGT
+prim "eqv?" = Prim Eqv
+prim "car" = Prim Car
+prim "cdr" = Prim Cdr
+prim "cons" = Prim Cons
+prim "pair?" = Prim Pair
+prim "number?" = Prim NumberP
+prim "symbol?" = Prim SymbolP
+prim "boolean?" = Prim BooleanP
+prim "string?" = Prim StringP
+prim "string-append" = Prim StringAppend
+prim "symbol->string" = Prim SymbolString
+prim "string->symbol" = Prim StringSymbol
+prim "number->string" = Prim NumberString
+prim "string->number" = Prim StringNumber
+prim "procedure?" = Prim ProcP
+prim "equal?" = Prim EqualP
+prim "eq?" = Prim EqP
 prim v = Ident v
 
 data Evaled

@@ -24,7 +24,7 @@ normalizeExpr :: MonadScheme m => Expr -> SchemeT m Expr
 normalizeExpr c@(Const _) = return c
 normalizeExpr (Ident i) = return $ prim i
 normalizeExpr (List l) = normalizeList l
-normalizeExpr n@(Normalized _) = return n
+normalizeExpr p@(Prim _) = return p
 normalizeExpr e@(Evaled _) = return e
 
 normalizeList :: MonadScheme m => List Expr -> SchemeT m Expr
