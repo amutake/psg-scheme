@@ -7,6 +7,7 @@ import Test.Core
 runContTests :: IO ()
 runContTests = hspec $ do
     callCCTest
+    shiftResetTest
 
 callCCTest :: Spec
 callCCTest = do
