@@ -17,9 +17,21 @@ data SchemeException
     | TypeMismatch String
     | SyntaxError String
     | IOError IOError
+    | Break Expr
     | Exit
-    deriving (Show, Typeable)
+    deriving (Typeable)
 
 instance Exception SchemeException
 
 instance Error SchemeException
+
+instance Show SchemeException where
+    show (ParseError doc) = "parse-error: " ++ show doc
+    show (NotFunction s) = "not-function: " ++ s
+    show (Unbind i) = "unbind: " ++ i
+    show (NumArgs s) = "wrong number args: " ++ s
+    show (TypeMismatch s) = "type-mismatch: expect: " ++ s
+    show (SyntaxError s) = "syntax-error: " ++ s
+    show (IOError e) = "io-error: " ++ show e
+    show (Break e) = show e
+    show Exit = "exit"

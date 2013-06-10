@@ -53,9 +53,6 @@ normalizeList (ProperList ((Ident "lambda"):(List args):body)) = do
 normalizeList (ProperList ((Ident "lambda"):_)) =
     throwError $ SyntaxError "lambda"
 normalizeList (ProperList [Ident "begin"]) = return $ Const Undefined
-normalizeList (ProperList [Ident "begin", List (ProperList [Ident "unquote-splicing", e])]) = do
-    e' <- normalizeExpr e
-    construct "begin" [List $ ProperList [Ident "unquote-splicing", e']]
 normalizeList (ProperList [Ident "begin", e]) = normalizeExpr e
 normalizeList (ProperList ((Ident "begin"):es)) = do
     es' <- mapM normalizeExpr es
@@ -63,8 +60,8 @@ normalizeList (ProperList ((Ident "begin"):es)) = do
 normalizeList (ProperList [Ident "set!", Ident var, e]) = do
     e' <- normalizeExpr e
     construct "set!" [Ident var, e']
--- normalizeList (ProperList ((Ident "set!"):_)) =
---     throwError $ SyntaxError "set!"
+normalizeList (ProperList ((Ident "set!"):_)) =
+    throwError $ SyntaxError "set!"
 normalizeList (ProperList [Ident "if", b, t, f]) = do
     b' <- normalizeExpr b
     t' <- normalizeExpr t

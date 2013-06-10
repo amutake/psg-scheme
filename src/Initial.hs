@@ -1,3 +1,4 @@
+
 {-# LANGUAGE FlexibleContexts #-}
 
 module Initial where
@@ -22,7 +23,7 @@ initialLoad :: EnvRef -> IO Macro
 initialLoad ref = execStateT (runErrorT $ runSchemeT $ scheme ref loadStr) empty
   where
     loadStr = concat $ map (\s -> "(load \"" ++ s ++ "\")")
-        [ "lib/syntax.scm"
+        [ "lib/test.scm"
+        , "lib/syntax.scm"
         , "lib/util.scm"
-        , "lib/test.scm"
         ]

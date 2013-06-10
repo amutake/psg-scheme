@@ -3,15 +3,16 @@
       ys
       (cons (car xs) (append (cdr xs) ys))))
 
-(define (not x) (if x #f #t))
+(define (snoc xs x)
+  (append xs (list x)))
 
-(define reverse
-  (lambda (ls)
-    (letrec ((iter (lambda (ls a)
-                     (if (null? ls)
-                         a
-                         (iter (cdr ls) (cons (car ls) a))))))
-      (iter ls '()))))
+(define (reverse xs)
+  (if (null? xs)
+      '()
+      (snoc (reverse (cdr xs)) (car xs))))
+
+
+(define (not x) (if x #f #t))
 
 (define (list . xs) xs)
 
@@ -43,9 +44,11 @@
       (+ 1 (length (cdr xs)))))
 
 (define (last xs)
-  (cond ((null? xs) 'undefined)
-        ((null? (cdr xs)) (car xs))
-        (else (last (cdr xs)))))
+  (if (null xs)
+      'undefined
+      (if (null? (cdr xs))
+          (car xs)
+          (last (cdr xs)))))
 
 (define (even? x)
   (if (= x 0) #t (odd? (- x 1))))

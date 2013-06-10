@@ -28,6 +28,7 @@ repl mac ref = do
     (results, mac') <- runStateT (runErrorT $ runSchemeT $ scheme ref str) mac
     case results of
         Left Exit -> putStrLn "Bye."
+        Left (Break e) -> next (show e) mac' ref
         Left (err :: SchemeException) -> next (show err) mac' ref
         Right es -> next (newline es) mac' ref
   where
